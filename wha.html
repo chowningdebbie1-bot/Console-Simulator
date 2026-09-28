@@ -1,0 +1,7758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Console Simulator — Version Museum</title>
+
+<style>
+/* =========================================================
+   CONSOLE SIMULATOR
+   Single-file OS / console / device simulator
+   ========================================================= */
+
+*{
+    box-sizing:border-box;
+}
+
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#090b10;
+    color:#fff;
+    overflow:hidden;
+}
+
+button,
+input,
+select{
+    font:inherit;
+}
+
+button{
+    cursor:pointer;
+}
+
+/* =========================
+   MAIN APPLICATION
+   ========================= */
+
+#app{
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+}
+
+.topbar{
+    height:62px;
+    flex:none;
+    display:flex;
+    align-items:center;
+    gap:18px;
+    padding:0 18px;
+    background:#11151d;
+    border-bottom:1px solid #29303c;
+    z-index:50;
+}
+
+.logo{
+    font-size:20px;
+    font-weight:900;
+    letter-spacing:1px;
+    white-space:nowrap;
+}
+
+.logo span{
+    color:#4cc9ff;
+}
+
+.top-actions{
+    margin-left:auto;
+    display:flex;
+    gap:8px;
+}
+
+.top-btn{
+    border:1px solid #303846;
+    background:#181d26;
+    color:#dce7f5;
+    border-radius:8px;
+    padding:9px 13px;
+}
+
+.top-btn:hover{
+    background:#222a35;
+}
+
+.main{
+    min-height:0;
+    flex:1;
+    display:flex;
+}
+
+/* =========================
+   SIDEBAR
+   ========================= */
+
+.sidebar{
+    width:245px;
+    flex:none;
+    background:#0d1118;
+    border-right:1px solid #252d38;
+    padding:16px;
+    overflow:auto;
+}
+
+.sidebar h3{
+    margin:4px 0 12px;
+    font-size:13px;
+    color:#8491a5;
+    text-transform:uppercase;
+    letter-spacing:1px;
+}
+
+.search{
+    width:100%;
+    border:1px solid #303846;
+    background:#151a22;
+    color:#fff;
+    border-radius:8px;
+    padding:10px;
+    outline:none;
+    margin-bottom:14px;
+}
+
+.category{
+    width:100%;
+    text-align:left;
+    border:0;
+    background:transparent;
+    color:#aeb9c9;
+    padding:10px;
+    border-radius:7px;
+    margin-bottom:3px;
+}
+
+.category:hover,
+.category.active{
+    background:#1c2633;
+    color:#fff;
+}
+
+.version-select{
+    width:100%;
+    background:#151a22;
+    border:1px solid #303846;
+    color:#fff;
+    padding:9px;
+    border-radius:7px;
+}
+
+/* =========================
+   CONTENT
+   ========================= */
+
+.content{
+    min-width:0;
+    flex:1;
+    overflow:auto;
+    padding:22px;
+    background:
+        radial-gradient(circle at 70% 0%,#172235 0,#090b10 45%);
+}
+
+.page{
+    display:none;
+}
+
+.page.active{
+    display:block;
+}
+
+.page-title{
+    font-size:30px;
+    font-weight:900;
+    margin-bottom:6px;
+}
+
+.page-subtitle{
+    color:#8d9bad;
+    margin-bottom:22px;
+}
+
+/* =========================
+   DEVICE CARDS
+   ========================= */
+
+.device-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+    gap:16px;
+}
+
+.device-card{
+    background:#111720;
+    border:1px solid #293342;
+    border-radius:13px;
+    padding:16px;
+    min-height:220px;
+    transition:.15s;
+}
+
+.device-card:hover{
+    transform:translateY(-2px);
+    border-color:#4c657f;
+    background:#141c27;
+}
+
+.device-picture{
+    height:110px;
+    border-radius:9px;
+    background:linear-gradient(135deg,#222b36,#0a0d12);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:45px;
+    margin-bottom:13px;
+    border:1px solid #303a48;
+}
+
+.device-card h3{
+    margin:0 0 5px;
+}
+
+.device-card p{
+    color:#8d9aaa;
+    font-size:13px;
+    min-height:38px;
+}
+
+.card-actions{
+    display:flex;
+    gap:7px;
+    flex-wrap:wrap;
+}
+
+.action{
+    border:1px solid #344153;
+    background:#19212c;
+    color:#fff;
+    border-radius:7px;
+    padding:8px 11px;
+}
+
+.action:hover{
+    background:#263342;
+}
+
+/* =========================
+   LAB PANELS
+   ========================= */
+
+.lab-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:14px;
+}
+
+.lab-card{
+    background:#111720;
+    border:1px solid #293342;
+    border-radius:12px;
+    padding:16px;
+}
+
+.lab-card h3{
+    margin-top:0;
+}
+
+.lab-card p{
+    color:#8f9bab;
+    line-height:1.5;
+}
+
+.lab-card button{
+    margin:4px;
+}
+
+/* =========================
+   SIMULATOR
+   ========================= */
+
+#simulator{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,.82);
+    z-index:100;
+}
+
+#simulator.open{
+    display:flex;
+}
+
+.sim-window{
+    width:min(1280px,96vw);
+    height:min(820px,94vh);
+    background:#080a0e;
+    border:1px solid #394454;
+    border-radius:15px;
+    overflow:hidden;
+    box-shadow:0 30px 100px #000;
+    display:flex;
+    flex-direction:column;
+}
+
+.sim-titlebar{
+    height:48px;
+    flex:none;
+    background:#151a22;
+    border-bottom:1px solid #303846;
+    display:flex;
+    align-items:center;
+    padding:0 12px;
+    gap:10px;
+}
+
+.sim-title{
+    font-weight:700;
+}
+
+.sim-close{
+    margin-left:auto;
+    border:0;
+    background:#382025;
+    color:#fff;
+    width:32px;
+    height:30px;
+    border-radius:6px;
+}
+
+.sim-controls{
+    height:48px;
+    flex:none;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:7px;
+    background:#0e131a;
+    border-bottom:1px solid #252c36;
+}
+
+.sim-controls button{
+    border:1px solid #323c4a;
+    background:#18202a;
+    color:#fff;
+    padding:7px 10px;
+    border-radius:6px;
+}
+
+.sim-controls button:hover{
+    background:#26313f;
+}
+
+.sim-body{
+    flex:1;
+    min-height:0;
+    display:flex;
+}
+
+.tv-area{
+    flex:1;
+    min-width:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:25px;
+    background:
+        radial-gradient(circle,#202938 0,#0a0d12 60%);
+}
+
+/* Universal physical TV */
+.tv{
+    width:min(900px,100%);
+    aspect-ratio:16/10;
+    background:#111;
+    border-radius:22px;
+    padding:22px;
+    border:5px solid #292d33;
+    box-shadow:
+        inset 0 0 0 2px #080808,
+        0 20px 50px #000;
+    position:relative;
+}
+
+.tv-screen{
+    width:100%;
+    height:100%;
+    background:#000;
+    overflow:hidden;
+    position:relative;
+    border-radius:5px;
+    box-shadow:inset 0 0 30px #000;
+}
+
+.tv-led{
+    position:absolute;
+    right:25px;
+    bottom:7px;
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:#333;
+}
+
+.tv.powered .tv-led{
+    background:#46ff77;
+    box-shadow:0 0 8px #46ff77;
+}
+
+.tv-button{
+    position:absolute;
+    left:25px;
+    bottom:2px;
+    width:14px;
+    height:14px;
+    border-radius:50%;
+    border:1px solid #555;
+    background:#151515;
+}
+
+/* =========================
+   SCREEN STATES
+   ========================= */
+
+.screen{
+    width:100%;
+    height:100%;
+    position:relative;
+    overflow:hidden;
+}
+
+.screen-center{
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    text-align:center;
+}
+
+/* Generic */
+.black-screen{
+    background:#000;
+    color:#fff;
+}
+
+.loading-dots{
+    display:flex;
+    gap:6px;
+    margin-top:18px;
+}
+
+.loading-dots i{
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:currentColor;
+    animation:dot 1.1s infinite;
+}
+
+.loading-dots i:nth-child(2){animation-delay:.18s}
+.loading-dots i:nth-child(3){animation-delay:.36s}
+.loading-dots i:nth-child(4){animation-delay:.54s}
+
+@keyframes dot{
+    0%,70%,100%{opacity:.2;transform:translateY(0)}
+    35%{opacity:1;transform:translateY(-5px)}
+}
+
+.boot-progress{
+    width:38%;
+    min-width:180px;
+    max-width:420px;
+    height:7px;
+    border-radius:10px;
+    overflow:hidden;
+    background:#222;
+    margin-top:20px;
+}
+
+.boot-progress-fill{
+    height:100%;
+    width:0%;
+    transition:width .25s linear;
+}
+
+/* =========================
+   ERA BOOT STYLES
+   ========================= */
+
+.boot-firmware{
+    background:#000;
+    color:#ddd;
+    align-items:flex-start;
+    justify-content:flex-start;
+    padding:25px;
+    font-family:"Courier New",monospace;
+    text-align:left;
+}
+
+.boot-firmware .big{
+    color:#fff;
+    font-size:20px;
+    margin-bottom:20px;
+}
+
+.boot-firmware .line{
+    margin:4px 0;
+}
+
+.boot-classic-windows{
+    background:#008080;
+    color:#fff;
+}
+
+.win-old-logo{
+    background:#c0c0c0;
+    color:#000;
+    padding:18px 30px;
+    border:3px outset #fff;
+    font-weight:bold;
+    font-size:26px;
+}
+
+.win-old-bar{
+    width:280px;
+    height:15px;
+    background:#111;
+    border:2px inset #fff;
+    margin-top:25px;
+}
+
+.win-old-bar span{
+    display:block;
+    width:0%;
+    height:100%;
+    background:#000080;
+}
+
+.boot-xp{
+    background:#000;
+    color:#fff;
+}
+
+.xp-logo{
+    font-size:31px;
+    font-weight:bold;
+}
+
+.xp-logo small{
+    display:block;
+    color:#e44;
+    font-size:12px;
+    letter-spacing:4px;
+}
+
+.xp-loading{
+    width:250px;
+    height:13px;
+    border:1px solid #777;
+    margin-top:35px;
+    padding:2px;
+}
+
+.xp-loading span{
+    display:block;
+    width:25%;
+    height:100%;
+    background:#2758ff;
+    animation:xpbar 1.4s linear infinite;
+}
+
+@keyframes xpbar{
+    from{transform:translateX(-100%)}
+    to{transform:translateX(400%)}
+}
+
+.boot-vista{
+    background:
+        radial-gradient(circle at center,#315577,#06121e 65%);
+}
+
+.vista-orb{
+    width:95px;
+    height:95px;
+    border-radius:50%;
+    background:
+        radial-gradient(circle at 30% 25%,#fff,#b8ecff 15%,#2383cc 55%,#0b3153);
+    box-shadow:0 0 35px #69d6ff;
+}
+
+.boot-modern{
+    background:#050505;
+}
+
+.modern-mark{
+    font-size:34px;
+    font-weight:300;
+    letter-spacing:2px;
+}
+
+.modern-ring{
+    width:25px;
+    height:25px;
+    border:3px solid #aaa;
+    border-top-color:transparent;
+    border-radius:50%;
+    margin-top:25px;
+    animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+    to{transform:rotate(360deg)}
+}
+
+.boot-ios{
+    background:#000;
+}
+
+.ios-mark{
+    font-size:44px;
+    font-weight:700;
+    letter-spacing:-2px;
+}
+
+.ios-bar{
+    width:180px;
+    height:4px;
+    background:#333;
+    border-radius:5px;
+    margin-top:28px;
+}
+
+.ios-bar span{
+    display:block;
+    width:0;
+    height:100%;
+    background:#fff;
+    transition:width .3s;
+}
+
+.boot-android{
+    background:#000;
+}
+
+.android-mark{
+    font-size:27px;
+    letter-spacing:3px;
+}
+
+.android-glow{
+    margin-top:20px;
+    font-size:13px;
+    opacity:.65;
+}
+
+.boot-console{
+    background:#050505;
+}
+
+.console-symbol{
+    font-size:52px;
+    font-weight:900;
+    letter-spacing:4px;
+}
+
+.console-sub{
+    opacity:.65;
+    margin-top:12px;
+}
+
+.boot-mac-classic{
+    background:#fff;
+    color:#111;
+}
+
+.mac-happy{
+    width:55px;
+    height:55px;
+    border:3px solid #111;
+    border-radius:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:27px;
+}
+
+.boot-macos{
+    background:#050505;
+}
+
+.mac-progress{
+    width:230px;
+    height:5px;
+    background:#444;
+    border-radius:5px;
+    margin-top:28px;
+}
+
+.mac-progress span{
+    display:block;
+    height:100%;
+    width:0;
+    background:#fff;
+}
+
+/* =========================
+   LOGIN / LOCK SCREENS
+   ========================= */
+
+.lock-ios{
+    background:
+        linear-gradient(145deg,#1b2947,#0b1022 45%,#2c1648);
+    color:white;
+}
+
+.lock-ios .clock{
+    font-size:66px;
+    font-weight:300;
+    letter-spacing:-3px;
+}
+
+.lock-ios .date{
+    margin-top:3px;
+    font-size:15px;
+}
+
+.lock-ios .notifications{
+    width:70%;
+    margin-top:30px;
+}
+
+.notification{
+    background:rgba(255,255,255,.14);
+    backdrop-filter:blur(15px);
+    padding:12px;
+    border-radius:14px;
+    margin:7px;
+    text-align:left;
+}
+
+.lock-android{
+    background:
+        linear-gradient(150deg,#182e35,#15201d,#263b5b);
+}
+
+.android-clock{
+    font-size:56px;
+    font-weight:300;
+}
+
+.android-date{
+    margin-top:5px;
+    opacity:.8;
+}
+
+.lock-windows{
+    background:
+        radial-gradient(circle at 50% 35%,#24476d,#091421 60%);
+}
+
+.login-card{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+
+.avatar{
+    width:76px;
+    height:76px;
+    border-radius:50%;
+    background:#64778d;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:30px;
+    margin-bottom:13px;
+}
+
+.login-name{
+    font-size:20px;
+    margin-bottom:12px;
+}
+
+.login-button{
+    border:0;
+    border-radius:5px;
+    background:#fff;
+    color:#111;
+    padding:8px 22px;
+}
+
+.lock-mac{
+    background:
+        radial-gradient(circle at center,#3c5068,#111821 70%);
+}
+
+.mac-login{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+
+.lock-console{
+    background:
+        radial-gradient(circle at center,#303030,#080808 70%);
+}
+
+/* =========================
+   WINDOWS MENUS
+   ========================= */
+
+.windows95{
+    background:#008080;
+    color:#000;
+    font-family:"MS Sans Serif",Tahoma,sans-serif;
+}
+
+.win95-desktop{
+    position:absolute;
+    inset:0;
+    padding:9px;
+}
+
+.desktop-icon{
+    width:72px;
+    text-align:center;
+    color:#fff;
+    font-size:11px;
+    margin-bottom:13px;
+}
+
+.desktop-icon .icon{
+    width:32px;
+    height:32px;
+    margin:auto auto 4px;
+    background:#c0c0c0;
+    border:2px outset #fff;
+    color:#000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+}
+
+.win95-taskbar{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:30px;
+    background:#c0c0c0;
+    border-top:2px solid #fff;
+    display:flex;
+    align-items:center;
+    padding:2px;
+}
+
+.win95-start{
+    height:25px;
+    padding:0 9px;
+    font-weight:bold;
+    border:2px outset #fff;
+    background:#c0c0c0;
+}
+
+.win95-clock{
+    margin-left:auto;
+    border:2px inset #fff;
+    padding:3px 7px;
+}
+
+.win95-menu{
+    position:absolute;
+    left:2px;
+    bottom:30px;
+    width:205px;
+    background:#c0c0c0;
+    border:3px outset #fff;
+    display:none;
+}
+
+.win95-menu.open{
+    display:block;
+}
+
+.win95-menu .menu-head{
+    height:175px;
+    width:28px;
+    background:#808080;
+    writing-mode:vertical-rl;
+    transform:rotate(180deg);
+    color:#fff;
+    font-weight:bold;
+    padding:8px;
+    position:absolute;
+    left:0;
+    top:0;
+}
+
+.win95-menu-items{
+    margin-left:28px;
+    padding:5px;
+}
+
+.win95-menu-item{
+    padding:8px;
+}
+
+.win95-menu-item:hover{
+    background:#000080;
+    color:#fff;
+}
+
+/* XP */
+.windows-xp{
+    background:
+        linear-gradient(135deg,#2c70c8,#6eb0ff 45%,#0b6b39);
+}
+
+.xp-desktop{
+    position:absolute;
+    inset:0;
+    padding:12px;
+}
+
+.xp-icon{
+    width:70px;
+    color:#fff;
+    text-align:center;
+    font-size:11px;
+    margin-bottom:15px;
+}
+
+.xp-icon .iconbox{
+    width:38px;
+    height:38px;
+    background:linear-gradient(#fff,#c5d7ff);
+    border-radius:5px;
+    margin:auto auto 4px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#173b7b;
+    font-weight:bold;
+}
+
+.xp-taskbar{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:37px;
+    background:linear-gradient(#357fd0,#0b52a1);
+    display:flex;
+    align-items:center;
+}
+
+.xp-start{
+    height:37px;
+    min-width:100px;
+    border:0;
+    background:linear-gradient(#64bb55,#2b8a27);
+    color:#fff;
+    font-weight:bold;
+    font-style:italic;
+    font-size:17px;
+}
+
+.xp-clock{
+    margin-left:auto;
+    height:100%;
+    padding:10px;
+    background:#1464ae;
+    color:#fff;
+}
+
+.xp-menu{
+    position:absolute;
+    left:0;
+    bottom:37px;
+    width:400px;
+    background:#fff;
+    color:#222;
+    border-radius:7px 7px 0 0;
+    box-shadow:0 10px 30px #0008;
+    display:none;
+    overflow:hidden;
+}
+
+.xp-menu.open{
+    display:block;
+}
+
+.xp-menu-top{
+    height:54px;
+    background:linear-gradient(#5da3eb,#175ca8);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    padding:8px;
+    font-weight:bold;
+}
+
+.xp-avatar{
+    width:38px;
+    height:38px;
+    border-radius:5px;
+    background:#ddd;
+    color:#333;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-right:10px;
+}
+
+.xp-menu-columns{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    min-height:250px;
+}
+
+.xp-menu-column{
+    padding:9px;
+}
+
+.xp-menu-column:first-child{
+    background:#fff;
+}
+
+.xp-menu-column:last-child{
+    background:#d9e9fa;
+}
+
+.xp-item{
+    padding:8px;
+    border-radius:4px;
+}
+
+.xp-item:hover{
+    background:#316ac5;
+    color:#fff;
+}
+
+/* Windows 7 */
+.windows7{
+    background:
+        radial-gradient(circle at 50% 30%,#5a91ba,#17394f 60%,#0b1722);
+}
+
+.win7-desktop{
+    position:absolute;
+    inset:0;
+    padding:12px;
+}
+
+.win7-taskbar{
+    position:absolute;
+    bottom:0;
+    left:0;
+    right:0;
+    height:43px;
+    background:rgba(15,24,31,.86);
+    backdrop-filter:blur(12px);
+    display:flex;
+    align-items:center;
+    padding:4px;
+}
+
+.win7-start{
+    width:35px;
+    height:35px;
+    border-radius:50%;
+    border:1px solid #b9e9ff;
+    background:radial-gradient(circle,#fff,#53a6d6 50%,#104c7a);
+    color:#fff;
+}
+
+.win7-task{
+    width:35px;
+    height:35px;
+    margin-left:5px;
+    border:1px solid #607786;
+    background:#1b2b38aa;
+    color:#fff;
+    border-radius:4px;
+}
+
+.win7-clock{
+    margin-left:auto;
+    padding:6px;
+    font-size:11px;
+}
+
+.win7-menu{
+    position:absolute;
+    bottom:43px;
+    left:5px;
+    width:360px;
+    height:400px;
+    background:rgba(20,31,40,.95);
+    backdrop-filter:blur(20px);
+    border:1px solid #8ca6b7;
+    box-shadow:0 15px 50px #000;
+    display:none;
+    color:#fff;
+}
+
+.win7-menu.open{
+    display:block;
+}
+
+.win7-menu-top{
+    height:55px;
+    background:linear-gradient(#526d7f,#243c4c);
+    padding:8px;
+    display:flex;
+    align-items:center;
+}
+
+.win7-menu-list{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    height:345px;
+}
+
+.win7-col{
+    padding:9px;
+}
+
+.win7-item{
+    padding:8px;
+    border-radius:4px;
+}
+
+.win7-item:hover{
+    background:#477ca4;
+}
+
+/* Windows 8 */
+.windows8{
+    background:#0066a6;
+}
+
+.win8-start{
+    position:absolute;
+    inset:0;
+    padding:35px;
+    background:#0078aa;
+}
+
+.win8-title{
+    font-size:32px;
+    font-weight:300;
+    margin-bottom:25px;
+}
+
+.win8-tiles{
+    display:grid;
+    grid-template-columns:repeat(4,120px);
+    grid-auto-rows:80px;
+    gap:6px;
+}
+
+.tile{
+    display:flex;
+    align-items:flex-end;
+    padding:9px;
+    color:#fff;
+    font-size:12px;
+    background:#1479b7;
+}
+
+.tile.large{
+    grid-column:span 2;
+    grid-row:span 2;
+    background:#159bba;
+}
+
+.tile.green{background:#0e9c70}
+.tile.orange{background:#d77826}
+.tile.purple{background:#7651a6}
+.tile.red{background:#b93443}
+
+/* Windows 10 */
+.windows10{
+    background:
+        linear-gradient(120deg,#183b5c,#07101c);
+}
+
+.win10-desktop{
+    position:absolute;
+    inset:0;
+    padding:13px;
+}
+
+.win10-taskbar{
+    position:absolute;
+    bottom:0;
+    left:0;
+    right:0;
+    height:42px;
+    background:#161616ee;
+    display:flex;
+    align-items:center;
+}
+
+.win10-start{
+    width:43px;
+    height:42px;
+    border:0;
+    background:transparent;
+    color:#fff;
+    font-size:21px;
+}
+
+.win10-search{
+    height:29px;
+    width:160px;
+    background:#333;
+    color:#aaa;
+    display:flex;
+    align-items:center;
+    padding:7px;
+    font-size:11px;
+}
+
+.win10-task{
+    height:42px;
+    min-width:38px;
+    border:0;
+    background:transparent;
+    color:#fff;
+}
+
+.win10-menu{
+    position:absolute;
+    left:0;
+    bottom:42px;
+    width:430px;
+    height:430px;
+    background:#202020f2;
+    backdrop-filter:blur(15px);
+    display:none;
+    color:#fff;
+}
+
+.win10-menu.open{
+    display:block;
+}
+
+.win10-menu-content{
+    display:grid;
+    grid-template-columns:145px 1fr;
+    height:100%;
+}
+
+.win10-list{
+    padding:12px;
+}
+
+.win10-list div{
+    padding:8px;
+}
+
+.win10-list div:hover{
+    background:#333;
+}
+
+.win10-tiles{
+    padding:12px;
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    grid-auto-rows:65px;
+    gap:5px;
+}
+
+.win10-tile{
+    background:#0879b9;
+    padding:8px;
+    font-size:11px;
+}
+
+/* Windows 11 */
+.windows11{
+    background:
+        radial-gradient(circle at 50% 30%,#42668b,#152238 60%,#08101d);
+}
+
+.win11-desktop{
+    position:absolute;
+    inset:0;
+    padding:15px;
+}
+
+.win11-taskbar{
+    position:absolute;
+    bottom:0;
+    left:0;
+    right:0;
+    height:48px;
+    background:#182230e8;
+    backdrop-filter:blur(20px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:5px;
+}
+
+.win11-task{
+    width:40px;
+    height:40px;
+    border:0;
+    border-radius:6px;
+    background:transparent;
+    color:#fff;
+}
+
+.win11-task:hover{
+    background:#ffffff20;
+}
+
+.win11-menu{
+    position:absolute;
+    bottom:48px;
+    left:50%;
+    transform:translateX(-50%);
+    width:480px;
+    height:500px;
+    background:#202a37ee;
+    backdrop-filter:blur(25px);
+    border:1px solid #657383;
+    border-radius:9px;
+    display:none;
+    color:#fff;
+    padding:22px;
+}
+
+.win11-menu.open{
+    display:block;
+}
+
+.win11-search{
+    height:38px;
+    border-radius:20px;
+    background:#111923;
+    border:1px solid #536170;
+    padding:10px 16px;
+    color:#9da9b7;
+}
+
+.win11-pinned{
+    margin-top:25px;
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:12px;
+}
+
+.win11-app{
+    text-align:center;
+    font-size:10px;
+}
+
+.win11-app-icon{
+    width:38px;
+    height:38px;
+    margin:auto auto 5px;
+    border-radius:7px;
+    background:#34465c;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+/* =========================
+   MAC MENUS
+   ========================= */
+
+.mac-classic{
+    background:#6f8277;
+    color:#111;
+    font-family:"Geneva",Arial,sans-serif;
+}
+
+.mac-classic-desktop{
+    position:absolute;
+    inset:0;
+    padding:15px;
+}
+
+.mac-menu-bar{
+    position:absolute;
+    left:0;
+    right:0;
+    top:0;
+    height:25px;
+    background:#eee;
+    border-bottom:1px solid #333;
+    display:flex;
+    align-items:center;
+    padding:0 7px;
+    font-size:11px;
+}
+
+.mac-menu-bar b{
+    margin-right:15px;
+}
+
+.mac-classic-icon{
+    width:65px;
+    text-align:center;
+    color:#fff;
+    margin-top:35px;
+    margin-bottom:15px;
+    font-size:11px;
+}
+
+.mac-classic-icon .box{
+    width:32px;
+    height:32px;
+    background:#eee;
+    border:2px solid #333;
+    margin:auto auto 4px;
+    color:#111;
+}
+
+.mac-modern{
+    background:
+        linear-gradient(135deg,#35404b,#12171c 55%,#56636f);
+    color:#fff;
+}
+
+.mac-desktop{
+    position:absolute;
+    inset:0;
+}
+
+.mac-modern-menu{
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    height:27px;
+    background:#f3f3f3dd;
+    color:#111;
+    display:flex;
+    align-items:center;
+    padding:0 12px;
+    font-size:12px;
+}
+
+.mac-modern-menu span{
+    margin-right:16px;
+}
+
+.mac-dock{
+    position:absolute;
+    bottom:7px;
+    left:50%;
+    transform:translateX(-50%);
+    height:58px;
+    padding:5px 9px;
+    background:#ffffff42;
+    backdrop-filter:blur(18px);
+    border:1px solid #ffffff50;
+    border-radius:17px;
+    display:flex;
+    gap:6px;
+}
+
+.dock-icon{
+    width:46px;
+    height:46px;
+    border-radius:11px;
+    background:#d9dfe7;
+    color:#222;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:18px;
+}
+
+/* =========================
+   IOS / IPADOS
+   ========================= */
+
+.ios-home{
+    background:
+        linear-gradient(150deg,#182e55,#5d2d83 50%,#d06a58);
+    color:#fff;
+}
+
+.mobile-status{
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    height:26px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 14px;
+    font-size:10px;
+    z-index:5;
+}
+
+.mobile-app-grid{
+    position:absolute;
+    left:16px;
+    right:16px;
+    top:50px;
+    bottom:75px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    grid-auto-rows:58px;
+    gap:12px 10px;
+}
+
+.mobile-app{
+    text-align:center;
+    font-size:8px;
+}
+
+.mobile-app-icon{
+    width:43px;
+    height:43px;
+    margin:auto auto 3px;
+    border-radius:11px;
+    background:#ddd;
+    color:#111;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:17px;
+    box-shadow:0 2px 5px #0005;
+}
+
+.mobile-dock{
+    position:absolute;
+    left:12px;
+    right:12px;
+    bottom:9px;
+    height:58px;
+    background:#ffffff36;
+    backdrop-filter:blur(18px);
+    border-radius:18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-around;
+}
+
+.mobile-dock .mobile-app-icon{
+    width:42px;
+    height:42px;
+}
+
+/* Older iOS */
+.ios-old{
+    background:
+        repeating-linear-gradient(
+            0deg,
+            #5f8cba 0,
+            #5f8cba 2px,
+            #527ea9 2px,
+            #527ea9 4px
+        );
+}
+
+.ios-old .mobile-app-icon{
+    border-radius:8px;
+    border:2px solid #fff8;
+    background:linear-gradient(#fff,#aaa);
+}
+
+/* iOS 7-era */
+.ios7{
+    background:
+        linear-gradient(135deg,#ef7447,#f5c24f,#4da7df,#7250b9);
+}
+
+.ios7 .mobile-app-icon{
+    border-radius:9px;
+    background:#ffffffcc;
+    color:#333;
+}
+
+/* iOS modern */
+.ios-modern{
+    background:
+        radial-gradient(circle at 25% 25%,#f2a3d3,#7155d8 35%,#13285e 75%);
+}
+
+/* iPad */
+.ipados{
+    background:
+        linear-gradient(145deg,#283e6b,#17223c 50%,#664b82);
+}
+
+.ipad-grid{
+    grid-template-columns:repeat(6,1fr);
+    gap:10px;
+}
+
+.ipad-grid .mobile-app-icon{
+    width:40px;
+    height:40px;
+}
+
+/* =========================
+   ANDROID
+   ========================= */
+
+.android-home{
+    background:
+        linear-gradient(150deg,#294f45,#172d2b 50%,#384e70);
+}
+
+.android-old{
+    background:
+        linear-gradient(#334d57,#17272c);
+}
+
+.android-lollipop{
+    background:
+        linear-gradient(135deg,#1e8c7b,#227bb4);
+}
+
+.android-modern{
+    background:
+        linear-gradient(145deg,#1d3642,#152b27 45%,#374c6d);
+}
+
+.android-app-grid{
+    top:45px;
+}
+
+.android-nav{
+    position:absolute;
+    bottom:0;
+    left:0;
+    right:0;
+    height:27px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:80px;
+    background:#0005;
+    font-size:11px;
+}
+
+/* =========================
+   CONSOLES
+   ========================= */
+
+.console-home{
+    background:#101010;
+    color:#fff;
+}
+
+.console-header{
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    height:48px;
+    display:flex;
+    align-items:center;
+    padding:0 20px;
+    border-bottom:1px solid #ffffff16;
+}
+
+.console-profile{
+    margin-left:auto;
+}
+
+.console-panels{
+    position:absolute;
+    inset:48px 0 0;
+    display:flex;
+    gap:8px;
+    padding:20px;
+}
+
+.console-panel{
+    min-width:180px;
+    flex:1;
+    height:180px;
+    padding:15px;
+    background:#222;
+    border:1px solid #444;
+    border-radius:3px;
+}
+
+.console-panel.active{
+    border-color:#fff;
+    transform:translateY(-5px);
+}
+
+.xbox-dashboard{
+    background:
+        linear-gradient(135deg,#071b08,#0a400f 50%,#071107);
+}
+
+.xbox-dashboard .console-panel{
+    background:#0c260e;
+    border-color:#27752d;
+}
+
+.ps3-xmb{
+    background:
+        linear-gradient(135deg,#11182a,#263e60,#101521);
+}
+
+.ps3-row{
+    position:absolute;
+    top:50%;
+    left:40px;
+    right:40px;
+    transform:translateY(-50%);
+    display:flex;
+    gap:7px;
+}
+
+.ps3-item{
+    width:115px;
+    height:150px;
+    background:#ffffff15;
+    border:1px solid #ffffff35;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-size:12px;
+}
+
+.ps4-dashboard{
+    background:
+        linear-gradient(135deg,#16151d,#24212d,#0d0e15);
+}
+
+.ps5-dashboard{
+    background:
+        radial-gradient(circle at 30% 30%,#30365e,#11131c 60%);
+}
+
+.nintendo-dashboard{
+    background:#f2f2f2;
+    color:#333;
+}
+
+.nintendo-grid{
+    position:absolute;
+    inset:60px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+}
+
+.nintendo-item{
+    background:#fff;
+    border:1px solid #ccc;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+}
+
+/* =========================
+   ERROR SCREENS
+   ========================= */
+
+.error-screen{
+    background:#111;
+    color:#fff;
+    padding:35px;
+    font-family:monospace;
+    text-align:left;
+}
+
+.error-screen.blue{
+    background:#0754a0;
+}
+
+.error-screen.red{
+    background:#7b0909;
+}
+
+.error-screen.black{
+    background:#000;
+}
+
+.error-code{
+    font-size:48px;
+    font-weight:bold;
+    margin-bottom:20px;
+}
+
+.error-screen h2{
+    margin:0 0 12px;
+}
+
+.error-screen p{
+    color:#d7d7d7;
+    max-width:650px;
+    line-height:1.5;
+}
+
+.error-actions{
+    margin-top:20px;
+}
+
+.error-actions button{
+    margin-right:7px;
+}
+
+/* =========================
+   SYSTEM WINDOWS
+   ========================= */
+
+.fake-window{
+    position:absolute;
+    left:10%;
+    top:12%;
+    width:70%;
+    max-width:620px;
+    min-height:220px;
+    background:#eee;
+    color:#111;
+    border:2px solid #222;
+    box-shadow:0 20px 50px #0009;
+    z-index:30;
+}
+
+.fake-title{
+    height:30px;
+    background:#1d4e91;
+    color:#fff;
+    display:flex;
+    align-items:center;
+    padding:0 8px;
+    font-size:12px;
+}
+
+.fake-title button{
+    margin-left:auto;
+    width:22px;
+    height:21px;
+    border:0;
+    background:#eee;
+    color:#111;
+}
+
+.fake-content{
+    padding:18px;
+}
+
+.fake-content button{
+    margin:4px;
+}
+
+/* =========================
+   RIGHT PANEL
+   ========================= */
+
+.sim-info{
+    width:265px;
+    flex:none;
+    border-left:1px solid #292f39;
+    background:#0e131a;
+    padding:12px;
+    overflow:auto;
+}
+
+.info-title{
+    color:#8794a6;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-bottom:7px;
+}
+
+.info-box{
+    background:#151b23;
+    border:1px solid #293340;
+    border-radius:7px;
+    padding:10px;
+    margin-bottom:10px;
+    font-size:12px;
+}
+
+#bootLog{
+    height:180px;
+    overflow:auto;
+    background:#050608;
+    border:1px solid #202732;
+    border-radius:6px;
+    padding:7px;
+    font-family:monospace;
+    font-size:10px;
+    color:#9fb0c3;
+}
+
+.log-line{
+    margin-bottom:3px;
+}
+
+/* =========================
+   MODAL
+   ========================= */
+
+.modal{
+    position:fixed;
+    inset:0;
+    z-index:200;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:#000b;
+}
+
+.modal.open{
+    display:flex;
+}
+
+.modal-box{
+    width:min(700px,92vw);
+    max-height:85vh;
+    overflow:auto;
+    background:#111820;
+    border:1px solid #354252;
+    border-radius:12px;
+    padding:20px;
+}
+
+.modal-head{
+    display:flex;
+    align-items:center;
+    margin-bottom:15px;
+}
+
+.modal-head button{
+    margin-left:auto;
+    background:#2a2025;
+    border:0;
+    color:#fff;
+    border-radius:6px;
+    padding:7px 10px;
+}
+
+.option-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:8px;
+}
+
+.option{
+    padding:12px;
+    border:1px solid #303b49;
+    background:#171e27;
+    color:#fff;
+    border-radius:8px;
+    text-align:left;
+}
+
+.option:hover{
+    background:#222d3a;
+}
+
+/* =========================
+   DESIGNER
+   ========================= */
+
+.designer{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+}
+
+.form-card{
+    background:#111720;
+    border:1px solid #293342;
+    border-radius:12px;
+    padding:18px;
+}
+
+.form-row{
+    margin-bottom:12px;
+}
+
+.form-row label{
+    display:block;
+    font-size:12px;
+    color:#9ba8b8;
+    margin-bottom:5px;
+}
+
+.form-row input,
+.form-row select{
+    width:100%;
+    background:#151b23;
+    color:#fff;
+    border:1px solid #354050;
+    border-radius:7px;
+    padding:9px;
+}
+
+/* =========================
+   MUSEUM
+   ========================= */
+
+.timeline{
+    position:relative;
+    padding:15px 0;
+}
+
+.timeline-line{
+    position:absolute;
+    left:50%;
+    top:0;
+    bottom:0;
+    width:2px;
+    background:#344153;
+}
+
+.timeline-item{
+    width:45%;
+    background:#111720;
+    border:1px solid #293342;
+    border-radius:10px;
+    padding:15px;
+    margin:15px 0;
+}
+
+.timeline-item:nth-child(even){
+    margin-left:55%;
+}
+
+.timeline-item h3{
+    margin-top:0;
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+
+@media(max-width:900px){
+    .sidebar{
+        width:190px;
+    }
+
+    .sim-info{
+        display:none;
+    }
+
+    .tv-area{
+        padding:10px;
+    }
+
+    .designer{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:650px){
+    .sidebar{
+        display:none;
+    }
+
+    .topbar{
+        height:55px;
+    }
+
+    .top-actions .top-btn{
+        display:none;
+    }
+
+    .content{
+        padding:12px;
+    }
+
+    .sim-window{
+        width:100%;
+        height:100%;
+        border-radius:0;
+    }
+
+    .sim-titlebar{
+        border-radius:0;
+    }
+
+    .tv{
+        padding:9px;
+        border-width:3px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="app">
+
+<header class="topbar">
+    <div class="logo">CONSOLE <span>SIMULATOR</span></div>
+
+    <div class="top-actions">
+        <button class="top-btn" onclick="showPage('devices')">Devices</button>
+        <button class="top-btn" onclick="showPage('versions')">Versions</button>
+        <button class="top-btn" onclick="showPage('errors')">Error Lab</button>
+        <button class="top-btn" onclick="showPage('hardware')">Hardware</button>
+        <button class="top-btn" onclick="showPage('museum')">Museum</button>
+    </div>
+</header>
+
+<div class="main">
+
+<aside class="sidebar">
+
+    <input
+        id="search"
+        class="search"
+        placeholder="Search devices..."
+        oninput="renderDevices()"
+    >
+
+    <h3>Device families</h3>
+
+    <button class="category active" data-cat="all" onclick="setCategory('all')">
+        All devices
+    </button>
+
+    <button class="category" data-cat="windows" onclick="setCategory('windows')">
+        Windows
+    </button>
+
+    <button class="category" data-cat="mac" onclick="setCategory('mac')">
+        Mac / macOS
+    </button>
+
+    <button class="category" data-cat="ios" onclick="setCategory('ios')">
+        iPhone / iOS
+    </button>
+
+    <button class="category" data-cat="ipados" onclick="setCategory('ipados')">
+        iPad / iPadOS
+    </button>
+
+    <button class="category" data-cat="android" onclick="setCategory('android')">
+        Android
+    </button>
+
+    <button class="category" data-cat="xbox" onclick="setCategory('xbox')">
+        Xbox
+    </button>
+
+    <button class="category" data-cat="playstation" onclick="setCategory('playstation')">
+        PlayStation
+    </button>
+
+    <button class="category" data-cat="nintendo" onclick="setCategory('nintendo')">
+        Nintendo
+    </button>
+
+    <button class="category" data-cat="retro" onclick="setCategory('retro')">
+        Retro computers
+    </button>
+
+    <h3 style="margin-top:25px">Quick version</h3>
+
+    <select class="version-select" id="quickVersion" onchange="quickVersion(this.value)">
+        <option value="">Choose version...</option>
+    </select>
+
+</aside>
+
+<main class="content">
+
+<!-- ================= DEVICES ================= -->
+
+<section id="page-devices" class="page active">
+
+    <div class="page-title">Device Library</div>
+    <div class="page-subtitle">
+        Choose a device, then select the operating-system version to simulate.
+    </div>
+
+    <div id="deviceGrid" class="device-grid"></div>
+
+</section>
+
+<!-- ================= VERSIONS ================= -->
+
+<section id="page-versions" class="page">
+
+    <div class="page-title">Version Museum</div>
+    <div class="page-subtitle">
+        Version-specific boot screens, lock screens and menus.
+    </div>
+
+    <div id="versionGrid" class="device-grid"></div>
+
+</section>
+
+<!-- ================= ERRORS ================= -->
+
+<section id="page-errors" class="page">
+
+    <div class="page-title">Error Lab</div>
+
+    <div class="page-subtitle">
+        Trigger system problems and then attempt to recover the simulated machine.
+    </div>
+
+    <div class="lab-grid">
+
+        <div class="lab-card">
+            <h3>Boot failures</h3>
+            <button class="action" onclick="labError('missing')">Missing system file</button>
+            <button class="action" onclick="labError('corrupt')">Corrupt system</button>
+            <button class="action" onclick="labError('loop')">Startup loop</button>
+            <button class="action" onclick="labError('nosystem')">No operating system</button>
+        </div>
+
+        <div class="lab-card">
+            <h3>Hardware</h3>
+            <button class="action" onclick="labError('storage')">Storage failure</button>
+            <button class="action" onclick="labError('ram')">Memory failure</button>
+            <button class="action" onclick="labError('gpu')">Display failure</button>
+            <button class="action" onclick="labError('fan')">Cooling warning</button>
+        </div>
+
+        <div class="lab-card">
+            <h3>System</h3>
+            <button class="action" onclick="labError('update')">Update failure</button>
+            <button class="action" onclick="labError('kernel')">System crash</button>
+            <button class="action" onclick="labError('freeze')">Frozen interface</button>
+            <button class="action" onclick="labError('black')">Black screen</button>
+        </div>
+
+        <div class="lab-card">
+            <h3>Connectivity</h3>
+            <button class="action" onclick="labError('network')">Network failure</button>
+            <button class="action" onclick="labError('controller')">Controller disconnected</button>
+            <button class="action" onclick="labError('random')">Random glitch</button>
+        </div>
+
+    </div>
+</section>
+
+<!-- ================= HARDWARE ================= -->
+
+<section id="page-hardware" class="page">
+
+    <div class="page-title">Hardware Laboratory</div>
+    <div class="page-subtitle">
+        Hardware conditions affect whether the simulated machine can start.
+    </div>
+
+    <div class="lab-grid">
+
+        <div class="lab-card">
+            <h3>Motherboard</h3>
+            <p id="hw-motherboard">Installed and responding.</p>
+            <button class="action" onclick="toggleHardware('motherboard')">
+                Remove / install
+            </button>
+        </div>
+
+        <div class="lab-card">
+            <h3>RAM</h3>
+            <p id="hw-ram">Installed and responding.</p>
+            <button class="action" onclick="toggleHardware('ram')">
+                Remove / install
+            </button>
+        </div>
+
+        <div class="lab-card">
+            <h3>Storage</h3>
+            <p id="hw-storage">Drive detected.</p>
+            <button class="action" onclick="toggleHardware('storage')">
+                Remove / install
+            </button>
+        </div>
+
+        <div class="lab-card">
+            <h3>GPU / display</h3>
+            <p id="hw-gpu">Display hardware detected.</p>
+            <button class="action" onclick="toggleHardware('gpu')">
+                Remove / install
+            </button>
+        </div>
+
+        <div class="lab-card">
+            <h3>Cooling</h3>
+            <p id="hw-fan">Cooling system operational.</p>
+            <button class="action" onclick="toggleHardware('fan')">
+                Remove / install
+            </button>
+        </div>
+
+        <div class="lab-card">
+            <h3>Power</h3>
+            <p id="hw-power">Power supply available.</p>
+            <button class="action" onclick="toggleHardware('power')">
+                Remove / install
+            </button>
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ================= DESIGNER ================= -->
+
+<section id="page-designer" class="page">
+
+    <div class="page-title">Custom Device Designer</div>
+    <div class="page-subtitle">
+        Create a fictional machine and give it its own boot sequence and interface.
+    </div>
+
+    <div class="designer">
+
+        <div class="form-card">
+
+            <div class="form-row">
+                <label>Device name</label>
+                <input id="customName" value="My Custom Computer">
+            </div>
+
+            <div class="form-row">
+                <label>Device family</label>
+                <select id="customFamily">
+                    <option value="windows">Windows PC</option>
+                    <option value="mac">Mac</option>
+                    <option value="ios">iPhone</option>
+                    <option value="ipados">iPad</option>
+                    <option value="android">Android</option>
+                    <option value="xbox">Xbox-style console</option>
+                    <option value="playstation">PlayStation-style console</option>
+                    <option value="nintendo">Nintendo-style console</option>
+                    <option value="retro">Retro computer</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label>Version / OS</label>
+                <input id="customVersion" value="Custom OS 1.0">
+            </div>
+
+            <div class="form-row">
+                <label>Case color</label>
+                <input id="customColor" type="color" value="#303840">
+            </div>
+
+            <div class="form-row">
+                <label>Startup message</label>
+                <input id="customStartup" value="Starting My Custom Computer...">
+            </div>
+
+            <button class="action" onclick="createCustomDevice()">
+                Create device
+            </button>
+
+        </div>
+
+        <div class="form-card">
+            <h3>Saved custom devices</h3>
+            <div id="customList"></div>
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ================= MUSEUM ================= -->
+
+<section id="page-museum" class="page">
+
+    <div class="page-title">Technology Museum</div>
+
+    <div class="page-subtitle">
+        The simulator can move through several generations of interface design.
+    </div>
+
+    <div class="timeline">
+
+        <div class="timeline-line"></div>
+
+        <div class="timeline-item">
+            <h3>1980s</h3>
+            <p>Firmware screens, text interfaces, simple startup diagnostics and monochrome displays.</p>
+        </div>
+
+        <div class="timeline-item">
+            <h3>1990s</h3>
+            <p>Classic desktop interfaces, CRT-style displays, boot menus and early graphical operating systems.</p>
+        </div>
+
+        <div class="timeline-item">
+            <h3>2000s</h3>
+            <p>Windows XP-era desktops, classic Mac interfaces, sixth-generation consoles and early smartphones.</p>
+        </div>
+
+        <div class="timeline-item">
+            <h3>2010s</h3>
+            <p>Touch interfaces, tile-based desktop interfaces, modern console dashboards and app stores.</p>
+        </div>
+
+        <div class="timeline-item">
+            <h3>2020s</h3>
+            <p>Modern desktop, tablet, phone and console interfaces with translucent panels and dynamic layouts.</p>
+        </div>
+
+        <div class="timeline-item">
+            <h3>2026 simulator era</h3>
+            <p>All of the simulated generations are connected through one universal device laboratory.</p>
+        </div>
+
+    </div>
+
+</section>
+
+</main>
+</div>
+</div>
+
+
+<!-- =========================================================
+     SIMULATOR WINDOW
+     ========================================================= -->
+
+<div id="simulator">
+
+<div class="sim-window">
+
+    <div class="sim-titlebar">
+        <div id="simTitle" class="sim-title">Device Simulator</div>
+        <button class="sim-close" onclick="closeSimulator()">×</button>
+    </div>
+
+    <div class="sim-controls">
+
+        <button onclick="powerToggle()">Power</button>
+        <button onclick="restartDevice()">Restart</button>
+        <button onclick="shutdownDevice()">Shutdown</button>
+        <button onclick="lockDevice()">Lock</button>
+        <button onclick="openVersionChooser()">Version</button>
+        <button onclick="openErrorLab()">Error Lab</button>
+        <button onclick="openSettings()">Settings</button>
+
+    </div>
+
+    <div class="sim-body">
+
+        <div class="tv-area">
+
+            <div id="tv" class="tv">
+
+                <div id="tvScreen" class="tv-screen">
+
+                    <div id="screen" class="screen black-screen">
+                        <div class="screen-center">
+                            <div>POWER OFF</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="tv-button"></div>
+                <div class="tv-led"></div>
+
+            </div>
+
+        </div>
+
+        <aside class="sim-info">
+
+            <div class="info-title">Current device</div>
+
+            <div class="info-box">
+                <b id="infoDevice">None</b>
+                <br>
+                <span id="infoVersion">No version selected</span>
+            </div>
+
+            <div class="info-title">Power state</div>
+
+            <div class="info-box" id="infoPower">
+                OFF
+            </div>
+
+            <div class="info-title">Boot log</div>
+
+            <div id="bootLog"></div>
+
+            <div class="info-title" style="margin-top:12px">
+                Hardware
+            </div>
+
+            <div class="info-box" id="hardwareSummary">
+                All hardware installed.
+            </div>
+
+        </aside>
+
+    </div>
+
+</div>
+</div>
+
+
+<!-- =========================================================
+     VERSION MODAL
+     ========================================================= -->
+
+<div id="versionModal" class="modal">
+
+    <div class="modal-box">
+
+        <div class="modal-head">
+            <h2>Select version</h2>
+            <button onclick="closeModal('versionModal')">Close</button>
+        </div>
+
+        <div id="versionOptions" class="option-grid"></div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     ERROR MODAL
+     ========================================================= -->
+
+<div id="errorModal" class="modal">
+
+    <div class="modal-box">
+
+        <div class="modal-head">
+            <h2>Error Lab</h2>
+            <button onclick="closeModal('errorModal')">Close</button>
+        </div>
+
+        <p>
+            Choose a failure to apply to the currently simulated machine.
+        </p>
+
+        <div class="option-grid">
+
+            <button class="option" onclick="applyError('missing')">
+                Missing system file
+            </button>
+
+            <button class="option" onclick="applyError('corrupt')">
+                Corrupted operating system
+            </button>
+
+            <button class="option" onclick="applyError('update')">
+                Failed update
+            </button>
+
+            <button class="option" onclick="applyError('loop')">
+                Startup loop
+            </button>
+
+            <button class="option" onclick="applyError('freeze')">
+                Frozen interface
+            </button>
+
+            <button class="option" onclick="applyError('black')">
+                Black screen
+            </button>
+
+            <button class="option" onclick="applyError('storage')">
+                Storage failure
+            </button>
+
+            <button class="option" onclick="applyError('network')">
+                Network failure
+            </button>
+
+            <button class="option" onclick="applyError('controller')">
+                Controller disconnected
+            </button>
+
+            <button class="option" onclick="applyError('kernel')">
+                System crash
+            </button>
+
+            <button class="option" onclick="applyError('random')">
+                Random glitch
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+     ========================================================= -->
+
+<script>
+
+/* =========================================================
+   VERSION DATABASE
+   ========================================================= */
+
+const versions = [
+
+/* WINDOWS */
+
+{
+    id:"win95",
+    family:"windows",
+    name:"Windows 95",
+    year:1995,
+    style:"windows95",
+    lock:"windows",
+    menu:"win95",
+    description:"Classic Windows 95 desktop and Start menu."
+},
+
+{
+    id:"win98",
+    family:"windows",
+    name:"Windows 98",
+    year:1998,
+    style:"windows95",
+    lock:"windows",
+    menu:"win95",
+    description:"Windows 9x-style desktop."
+},
+
+{
+    id:"winme",
+    family:"windows",
+    name:"Windows Me",
+    year:2000,
+    style:"windows95",
+    lock:"windows",
+    menu:"win95",
+    description:"Late Windows 9x-style interface."
+},
+
+{
+    id:"win2000",
+    family:"windows",
+    name:"Windows 2000",
+    year:2000,
+    style:"windows95",
+    lock:"windows",
+    menu:"win95",
+    description:"Classic professional Windows interface."
+},
+
+{
+    id:"winxp",
+    family:"windows",
+    name:"Windows XP",
+    year:2001,
+    style:"windows-xp",
+    lock:"windows",
+    menu:"xp",
+    description:"XP-era desktop and two-column Start menu."
+},
+
+{
+    id:"winvista",
+    family:"windows",
+    name:"Windows Vista",
+    year:2006,
+    style:"windows7",
+    lock:"windows",
+    menu:"win7",
+    description:"Glass-inspired Vista-era desktop."
+},
+
+{
+    id:"win7",
+    family:"windows",
+    name:"Windows 7",
+    year:2009,
+    style:"windows7",
+    lock:"windows",
+    menu:"win7",
+    description:"Aero-style desktop and Start menu."
+},
+
+{
+    id:"win8",
+    family:"windows",
+    name:"Windows 8",
+    year:2012,
+    style:"windows8",
+    lock:"windows",
+    menu:"win8",
+    description:"Full-screen tile-based Start screen."
+},
+
+{
+    id:"win81",
+    family:"windows",
+    name:"Windows 8.1",
+    year:2013,
+    style:"windows8",
+    lock:"windows",
+    menu:"win8",
+    description:"Updated tile-based Start screen."
+},
+
+{
+    id:"win10",
+    family:"windows",
+    name:"Windows 10",
+    year:2015,
+    style:"windows10",
+    lock:"windows",
+    menu:"win10",
+    description:"Hybrid desktop and Start menu."
+},
+
+{
+    id:"win11",
+    family:"windows",
+    name:"Windows 11",
+    year:2021,
+    style:"windows11",
+    lock:"windows",
+    menu:"win11",
+    description:"Centered taskbar and modern Start menu."
+},
+
+/* MAC */
+
+{
+    id:"macclassic",
+    family:"mac",
+    name:"Classic Mac OS",
+    year:1990,
+    style:"mac-classic",
+    lock:"mac",
+    menu:"classicmac",
+    description:"Classic Mac desktop and menu bar."
+},
+
+{
+    id:"macosx",
+    family:"mac",
+    name:"Mac OS X",
+    year:2001,
+    style:"mac-modern",
+    lock:"mac",
+    menu:"modernmac",
+    description:"Early OS X-inspired desktop."
+},
+
+{
+    id:"macos10",
+    family:"mac",
+    name:"OS X 10.10 Era",
+    year:2014,
+    style:"mac-modern",
+    lock:"mac",
+    menu:"modernmac",
+    description:"Translucent modern Mac interface."
+},
+
+{
+    id:"macos11",
+    family:"mac",
+    name:"macOS 11 Era",
+    year:2020,
+    style:"mac-modern",
+    lock:"mac",
+    menu:"modernmac",
+    description:"Modern macOS-inspired interface."
+},
+
+{
+    id:"macos26",
+    family:"mac",
+    name:"macOS 26 Era",
+    year:2026,
+    style:"mac-modern",
+    lock:"mac",
+    menu:"modernmac",
+    description:"Current-era macOS-style simulation."
+},
+
+/* IOS */
+
+{
+    id:"ios1",
+    family:"ios",
+    name:"iPhone OS 1",
+    year:2007,
+    style:"ios-old",
+    lock:"ios",
+    menu:"ios",
+    description:"Early iPhone home screen."
+},
+
+{
+    id:"ios3",
+    family:"ios",
+    name:"iPhone OS 3",
+    year:2009,
+    style:"ios-old",
+    lock:"ios",
+    menu:"ios",
+    description:"Early iPhone interface."
+},
+
+{
+    id:"ios4",
+    family:"ios",
+    name:"iOS 4",
+    year:2010,
+    style:"ios-old",
+    lock:"ios",
+    menu:"ios",
+    description:"Early iOS interface."
+},
+
+{
+    id:"ios6",
+    family:"ios",
+    name:"iOS 6",
+    year:2012,
+    style:"ios-old",
+    lock:"ios",
+    menu:"ios",
+    description:"Pre-flat iOS era."
+},
+
+{
+    id:"ios7",
+    family:"ios",
+    name:"iOS 7",
+    year:2013,
+    style:"ios7",
+    lock:"ios",
+    menu:"ios",
+    description:"Flat-design iOS era."
+},
+
+{
+    id:"ios9",
+    family:"ios",
+    name:"iOS 9",
+    year:2015,
+    style:"ios7",
+    lock:"ios",
+    menu:"ios",
+    description:"Flat iOS interface."
+},
+
+{
+    id:"ios12",
+    family:"ios",
+    name:"iOS 12",
+    year:2018,
+    style:"ios7",
+    lock:"ios",
+    menu:"ios",
+    description:"Classic flat iOS generation."
+},
+
+{
+    id:"ios13",
+    family:"ios",
+    name:"iOS 13",
+    year:2019,
+    style:"ios-modern",
+    lock:"ios",
+    menu:"ios",
+    description:"Modern iOS era."
+},
+
+{
+    id:"ios16",
+    family:"ios",
+    name:"iOS 16",
+    year:2022,
+    style:"ios-modern",
+    lock:"ios",
+    menu:"ios",
+    description:"Widget-rich lock screen era."
+},
+
+{
+    id:"ios18",
+    family:"ios",
+    name:"iOS 18",
+    year:2024,
+    style:"ios-modern",
+    lock:"ios",
+    menu:"ios",
+    description:"Modern iPhone-style interface."
+},
+
+{
+    id:"ios26",
+    family:"ios",
+    name:"iOS 26 Era",
+    year:2026,
+    style:"ios-modern",
+    lock:"ios",
+    menu:"ios",
+    description:"Current-era iPhone-style simulation."
+},
+
+/* IPADOS */
+
+{
+    id:"ipados13",
+    family:"ipados",
+    name:"iPadOS 13",
+    year:2019,
+    style:"ipados",
+    lock:"ios",
+    menu:"ios",
+    description:"First iPadOS-era interface."
+},
+
+{
+    id:"ipados15",
+    family:"ipados",
+    name:"iPadOS 15",
+    year:2021,
+    style:"ipados",
+    lock:"ios",
+    menu:"ios",
+    description:"Widget-focused iPad interface."
+},
+
+{
+    id:"ipados16",
+    family:"ipados",
+    name:"iPadOS 16",
+    year:2022,
+    style:"ipados",
+    lock:"ios",
+    menu:"ios",
+    description:"Multitasking-focused iPad interface."
+},
+
+{
+    id:"ipados18",
+    family:"ipados",
+    name:"iPadOS 18",
+    year:2024,
+    style:"ipados",
+    lock:"ios",
+    menu:"ios",
+    description:"Modern iPad interface."
+},
+
+{
+    id:"ipados26",
+    family:"ipados",
+    name:"iPadOS 26 Era",
+    year:2026,
+    style:"ipados",
+    lock:"ios",
+    menu:"ios",
+    description:"Current-era iPad-style simulation."
+},
+
+/* ANDROID */
+
+{
+    id:"android1",
+    family:"android",
+    name:"Android 1.0",
+    year:2008,
+    style:"android-old",
+    lock:"android",
+    menu:"android",
+    description:"Early Android interface."
+},
+
+{
+    id:"androidcupcake",
+    family:"android",
+    name:"Android 1.5 Cupcake",
+    year:2009,
+    style:"android-old",
+    lock:"android",
+    menu:"android",
+    description:"Early Android generation."
+},
+
+{
+    id:"androiddonut",
+    family:"android",
+    name:"Android 1.6 Donut",
+    year:2009,
+    style:"android-old",
+    lock:"android",
+    menu:"android",
+    description:"Early Android interface."
+},
+
+{
+    id:"androidfroyo",
+    family:"android",
+    name:"Android 2.2 Froyo",
+    year:2010,
+    style:"android-old",
+    lock:"android",
+    menu:"android",
+    description:"Classic early Android interface."
+},
+
+{
+    id:"androidgingerbread",
+    family:"android",
+    name:"Android 2.3 Gingerbread",
+    year:2010,
+    style:"android-old",
+    lock:"android",
+    menu:"android",
+    description:"Classic Android generation."
+},
+
+{
+    id:"androidhoneycomb",
+    family:"android",
+    name:"Android 3 Honeycomb",
+    year:2011,
+    style:"android-old",
+    lock:"android",
+    menu:"android",
+    description:"Tablet-oriented Android interface."
+},
+
+{
+    id:"androidics",
+    family:"android",
+    name:"Android 4 Ice Cream Sandwich",
+    year:2011,
+    style:"android-lollipop",
+    lock:"android",
+    menu:"android",
+    description:"Holo-style Android era."
+},
+
+{
+    id:"androidkitkat",
+    family:"android",
+    name:"Android 4.4 KitKat",
+    year:2013,
+    style:"android-lollipop",
+    lock:"android",
+    menu:"android",
+    description:"KitKat-era Android."
+},
+
+{
+    id:"androidlollipop",
+    family:"android",
+    name:"Android 5 Lollipop",
+    year:2014,
+    style:"android-lollipop",
+    lock:"android",
+    menu:"android",
+    description:"Material Design era."
+},
+
+{
+    id:"androidmarshmallow",
+    family:"android",
+    name:"Android 6 Marshmallow",
+    year:2015,
+    style:"android-lollipop",
+    lock:"android",
+    menu:"android",
+    description:"Material Android interface."
+},
+
+{
+    id:"androidnougat",
+    family:"android",
+    name:"Android 7 Nougat",
+    year:2016,
+    style:"android-lollipop",
+    lock:"android",
+    menu:"android",
+    description:"Material Android generation."
+},
+
+{
+    id:"androidoreo",
+    family:"android",
+    name:"Android 8 Oreo",
+    year:2017,
+    style:"android-modern",
+    lock:"android",
+    menu:"android",
+    description:"Modern Material interface."
+},
+
+{
+    id:"androidpie",
+    family:"android",
+    name:"Android 9 Pie",
+    year:2018,
+    style:"android-modern",
+    lock:"android",
+    menu:"android",
+    description:"Gesture-focused Android era."
+},
+
+{
+    id:"android10",
+    family:"android",
+    name:"Android 10",
+    year:2019,
+    style:"android-modern",
+    lock:"android",
+    menu:"android",
+    description:"Modern Android interface."
+},
+
+{
+    id:"android11",
+    family:"android",
+    name:"Android 11",
+    year:2020,
+    style:"android-modern",
+    lock:"android",
+    menu:"android",
+    description:"Modern Android generation."
+},
+
+{
+    id:"android12",
+    family:"android",
+    name:"Android 12",
+    year:2021,
+    style:"android-modern",
+    lock:"android",
+    menu:"android",
+    description:"Large-clock modern Android era."
+},
+
+{
+    id:"android13",
+    family:"android",
+    name:"Android 13",
+    year:2022,
+    style:"android-modern",
+    lock:"android",
+    menu:"android",
+    description:"Modern Android."
+},
+
+{
+    id:"android14",
+    family:"android",
+    name:"Android 14",
+    year:2023,
+    style:"android-modern",
+    lock:"android",
+    menu:"android",
+    description:"Modern Android."
+},
+
+{
+    id:"android15",
+    family:"android",
+    name:"Android 15",
+    year:2024,
+    style:"android-modern",
+    lock:"android",
+    menu:"android",
+    description:"Modern Android."
+},
+
+{
+    id:"android16",
+    family:"android",
+    name:"Android 16",
+    year:2025,
+    style:"android-modern",
+    lock:"android",
+    menu:"android",
+    description:"Current-era Android simulation."
+},
+
+{
+    id:"android17",
+    family:"android",
+    name:"Android 17 Era",
+    year:2026,
+    style:"android-modern",
+    lock:"android",
+    menu:"android",
+    description:"Current-era Android simulation."
+},
+
+/* XBOX */
+
+{
+    id:"xbox1",
+    family:"xbox",
+    name:"Original Xbox",
+    year:2001,
+    style:"console-home",
+    lock:"console",
+    menu:"xbox",
+    description:"Original Xbox-style dashboard."
+},
+
+{
+    id:"xbox360blades",
+    family:"xbox",
+    name:"Xbox 360 Blades Era",
+    year:2005,
+    style:"xbox-dashboard",
+    lock:"console",
+    menu:"xbox",
+    description:"Early Xbox 360 dashboard style."
+},
+
+{
+    id:"xbox360nxe",
+    family:"xbox",
+    name:"Xbox 360 NXE Era",
+    year:2008,
+    style:"xbox-dashboard",
+    lock:"console",
+    menu:"xbox",
+    description:"Xbox 360 New Xbox Experience style."
+},
+
+{
+    id:"xboxone",
+    family:"xbox",
+    name:"Xbox One",
+    year:2013,
+    style:"xbox-dashboard",
+    lock:"console",
+    menu:"xbox",
+    description:"Xbox One dashboard style."
+},
+
+{
+    id:"xboxones",
+    family:"xbox",
+    name:"Xbox One S Era",
+    year:2016,
+    style:"xbox-dashboard",
+    lock:"console",
+    menu:"xbox",
+    description:"Xbox One S era dashboard."
+},
+
+{
+    id:"xboxseries",
+    family:"xbox",
+    name:"Xbox Series Era",
+    year:2020,
+    style:"xbox-dashboard",
+    lock:"console",
+    menu:"xbox",
+    description:"Modern Xbox dashboard."
+},
+
+/* PLAYSTATION */
+
+{
+    id:"ps1",
+    family:"playstation",
+    name:"PlayStation",
+    year:1994,
+    style:"console-home",
+    lock:"console",
+    menu:"playstation",
+    description:"Original PlayStation-style startup."
+},
+
+{
+    id:"ps2",
+    family:"playstation",
+    name:"PlayStation 2",
+    year:2000,
+    style:"console-home",
+    lock:"console",
+    menu:"playstation",
+    description:"PS2-inspired startup and browser."
+},
+
+{
+    id:"ps3",
+    family:"playstation",
+    name:"PlayStation 3",
+    year:2006,
+    style:"ps3-xmb",
+    lock:"console",
+    menu:"playstation",
+    description:"XMB-style interface."
+},
+
+{
+    id:"ps4",
+    family:"playstation",
+    name:"PlayStation 4",
+    year:2013,
+    style:"ps4-dashboard",
+    lock:"console",
+    menu:"playstation",
+    description:"PS4 dashboard style."
+},
+
+{
+    id:"ps5",
+    family:"playstation",
+    name:"PlayStation 5",
+    year:2020,
+    style:"ps5-dashboard",
+    lock:"console",
+    menu:"playstation",
+    description:"Modern PlayStation dashboard."
+},
+
+/* NINTENDO */
+
+{
+    id:"nes",
+    family:"nintendo",
+    name:"NES",
+    year:1983,
+    style:"nintendo-dashboard",
+    lock:"console",
+    menu:"nintendo",
+    description:"Nintendo-style classic menu."
+},
+
+{
+    id:"snes",
+    family:"nintendo",
+    name:"SNES",
+    year:1990,
+    style:"nintendo-dashboard",
+    lock:"console",
+    menu:"nintendo",
+    description:"SNES-era menu simulation."
+},
+
+{
+    id:"n64",
+    family:"nintendo",
+    name:"Nintendo 64",
+    year:1996,
+    style:"nintendo-dashboard",
+    lock:"console",
+    menu:"nintendo",
+    description:"N64-style startup."
+},
+
+{
+    id:"gamecube",
+    family:"nintendo",
+    name:"GameCube",
+    year:2001,
+    style:"nintendo-dashboard",
+    lock:"console",
+    menu:"nintendo",
+    description:"GameCube-style startup."
+},
+
+{
+    id:"wii",
+    family:"nintendo",
+    name:"Wii",
+    year:2006,
+    style:"nintendo-dashboard",
+    lock:"console",
+    menu:"nintendo",
+    description:"Wii channel-style menu."
+},
+
+{
+    id:"wiiu",
+    family:"nintendo",
+    name:"Wii U",
+    year:2012,
+    style:"nintendo-dashboard",
+    lock:"console",
+    menu:"nintendo",
+    description:"Wii U-style menu."
+},
+
+{
+    id:"switch",
+    family:"nintendo",
+    name:"Nintendo Switch",
+    year:2017,
+    style:"nintendo-dashboard",
+    lock:"console",
+    menu:"nintendo",
+    description:"Switch-style home screen."
+},
+
+{
+    id:"switch2",
+    family:"nintendo",
+    name:"Nintendo Switch 2 Era",
+    year:2025,
+    style:"nintendo-dashboard",
+    lock:"console",
+    menu:"nintendo",
+    description:"Current-era Nintendo-style interface."
+},
+
+/* RETRO */
+
+{
+    id:"retro80",
+    family:"retro",
+    name:"1980s Personal Computer",
+    year:1985,
+    style:"boot-firmware",
+    lock:"none",
+    menu:"retro",
+    description:"Text-based firmware and command interface."
+},
+
+{
+    id:"retro90",
+    family:"retro",
+    name:"1990s PC",
+    year:1994,
+    style:"boot-firmware",
+    lock:"windows",
+    menu:"retro",
+    description:"DOS/early graphical PC simulation."
+}
+
+];
+
+
+/* =========================================================
+   DEVICE DATABASE
+   ========================================================= */
+
+const devices = [
+
+{
+    id:"pc",
+    name:"Universal Windows PC",
+    family:"windows",
+    icon:"▣",
+    defaultVersion:"win11"
+},
+
+{
+    id:"mac",
+    name:"Macintosh Computer",
+    family:"mac",
+    icon:"",
+    defaultVersion:"macos26"
+},
+
+{
+    id:"iphone",
+    name:"iPhone",
+    family:"ios",
+    icon:"▯",
+    defaultVersion:"ios26"
+},
+
+{
+    id:"ipad",
+    name:"iPad",
+    family:"ipados",
+    icon:"▯",
+    defaultVersion:"ipados26"
+},
+
+{
+    id:"androidphone",
+    name:"Android Phone",
+    family:"android",
+    icon:"◆",
+    defaultVersion:"android17"
+},
+
+{
+    id:"xbox",
+    name:"Xbox",
+    family:"xbox",
+    icon:"X",
+    defaultVersion:"xboxseries"
+},
+
+{
+    id:"playstation",
+    name:"PlayStation",
+    family:"playstation",
+    icon:"△",
+    defaultVersion:"ps5"
+},
+
+{
+    id:"nintendo",
+    name:"Nintendo Console",
+    family:"nintendo",
+    icon:"N",
+    defaultVersion:"switch2"
+},
+
+{
+    id:"retro",
+    name:"Retro Personal Computer",
+    family:"retro",
+    icon:">_",
+    defaultVersion:"retro80"
+}
+
+];
+
+
+/* =========================================================
+   STATE
+   ========================================================= */
+
+let currentDevice=null;
+let currentVersion=null;
+
+let category="all";
+
+let powerState=false;
+let booting=false;
+let shuttingDown=false;
+let locked=false;
+let currentError=null;
+
+let bootTimer=null;
+let bootInterval=null;
+let shutdownTimer=null;
+
+let audioContext=null;
+
+const hardware={
+    motherboard:true,
+    ram:true,
+    storage:true,
+    gpu:true,
+    fan:true,
+    power:true
+};
+
+
+/* =========================================================
+   INITIALIZATION
+   ========================================================= */
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+    renderDevices();
+    renderVersions();
+    renderQuickVersions();
+    renderCustomDevices();
+    updateHardware();
+
+});
+
+
+/* =========================================================
+   PAGE NAVIGATION
+   ========================================================= */
+
+function showPage(name){
+
+    document.querySelectorAll(".page").forEach(page=>{
+        page.classList.remove("active");
+    });
+
+    const page=document.getElementById("page-"+name);
+
+    if(page){
+        page.classList.add("active");
+    }
+
+    if(name==="devices"){
+        renderDevices();
+    }
+
+}
+
+
+/* =========================================================
+   DEVICE LIBRARY
+   ========================================================= */
+
+function setCategory(cat){
+
+    category=cat;
+
+    document.querySelectorAll(".category").forEach(btn=>{
+        btn.classList.toggle(
+            "active",
+            btn.dataset.cat===cat
+        );
+    });
+
+    renderDevices();
+
+}
+
+
+function renderDevices(){
+
+    const grid=document.getElementById("deviceGrid");
+
+    if(!grid)return;
+
+    const search=
+        document.getElementById("search").value
+        .toLowerCase();
+
+    grid.innerHTML="";
+
+    const allDevices=[
+        ...devices,
+        ...getCustomDevices()
+    ];
+
+    const filtered=allDevices.filter(device=>{
+
+        const categoryMatch=
+            category==="all" ||
+            device.family===category;
+
+        const text=(
+            device.name+
+            " "+
+            device.family
+        ).toLowerCase();
+
+        return categoryMatch &&
+               text.includes(search);
+
+    });
+
+    filtered.forEach(device=>{
+
+        const card=document.createElement("div");
+
+        card.className="device-card";
+
+        const version=versions.find(
+            v=>v.id===device.defaultVersion
+        );
+
+        card.innerHTML=`
+
+            <div class="device-picture">
+                ${device.icon || "▣"}
+            </div>
+
+            <h3>${escapeHTML(device.name)}</h3>
+
+            <p>
+                ${escapeHTML(
+                    version ?
+                    version.description :
+                    "Custom simulated device."
+                )}
+            </p>
+
+            <div class="card-actions">
+
+                <button
+                    class="action"
+                    onclick="openDevice('${device.id}')"
+                >
+                    Power on
+                </button>
+
+                <button
+                    class="action"
+                    onclick="chooseDeviceVersion('${device.id}')"
+                >
+                    Versions
+                </button>
+
+            </div>
+
+        `;
+
+        grid.appendChild(card);
+
+    });
+
+}
+
+
+/* =========================================================
+   VERSION MUSEUM
+   ========================================================= */
+
+function renderVersions(){
+
+    const grid=document.getElementById("versionGrid");
+
+    grid.innerHTML="";
+
+    versions.forEach(version=>{
+
+        const card=document.createElement("div");
+
+        card.className="device-card";
+
+        card.innerHTML=`
+
+            <div class="device-picture">
+                ${version.year}
+            </div>
+
+            <h3>${escapeHTML(version.name)}</h3>
+
+            <p>
+                ${escapeHTML(version.description)}
+            </p>
+
+            <div class="card-actions">
+
+                <button
+                    class="action"
+                    onclick="openVersionDirect('${version.id}')"
+                >
+                    Simulate
+                </button>
+
+            </div>
+
+        `;
+
+        grid.appendChild(card);
+
+    });
+
+}
+
+
+function renderQuickVersions(){
+
+    const select=document.getElementById("quickVersion");
+
+    versions.forEach(version=>{
+
+        const option=document.createElement("option");
+
+        option.value=version.id;
+        option.textContent=
+            `${version.name} — ${version.year}`;
+
+        select.appendChild(option);
+
+    });
+
+}
+
+
+function quickVersion(id){
+
+    if(!id)return;
+
+    const version=versions.find(v=>v.id===id);
+
+    if(!version)return;
+
+    let device=devices.find(
+        d=>d.family===version.family
+    );
+
+    if(!device){
+
+        device={
+            id:"quick",
+            name:"Version Simulator",
+            family:version.family,
+            icon:"▣"
+        };
+
+    }
+
+    currentDevice=device;
+    currentVersion=version;
+
+    openSimulator();
+
+}
+
+
+/* =========================================================
+   OPEN DEVICE
+   ========================================================= */
+
+function openDevice(id){
+
+    const all=[
+        ...devices,
+        ...getCustomDevices()
+    ];
+
+    const device=all.find(
+        d=>d.id===id
+    );
+
+    if(!device)return;
+
+    currentDevice=device;
+
+    currentVersion=
+        versions.find(
+            v=>v.id===device.defaultVersion
+        ) ||
+        versions.find(
+            v=>v.family===device.family
+        );
+
+    openSimulator();
+
+}
+
+
+function openVersionDirect(id){
+
+    const version=versions.find(v=>v.id===id);
+
+    if(!version)return;
+
+    currentVersion=version;
+
+    currentDevice=
+        devices.find(
+            d=>d.family===version.family
+        ) ||
+        {
+            id:"version-device",
+            name:version.name,
+            family:version.family,
+            icon:"▣"
+        };
+
+    openSimulator();
+
+}
+
+
+function chooseDeviceVersion(id){
+
+    const all=[
+        ...devices,
+        ...getCustomDevices()
+    ];
+
+    const device=all.find(d=>d.id===id);
+
+    if(!device)return;
+
+    currentDevice=device;
+
+    const familyVersions=
+        versions.filter(
+            v=>v.family===device.family
+        );
+
+    const container=
+        document.getElementById("versionOptions");
+
+    container.innerHTML="";
+
+    familyVersions.forEach(version=>{
+
+        const button=
+            document.createElement("button");
+
+        button.className="option";
+
+        button.innerHTML=`
+            <b>${escapeHTML(version.name)}</b>
+            <br>
+            <small>${version.year}</small>
+            <br>
+            <span>${escapeHTML(version.description)}</span>
+        `;
+
+        button.onclick=()=>{
+
+            currentVersion=version;
+
+            closeModal("versionModal");
+
+            openSimulator();
+
+        };
+
+        container.appendChild(button);
+
+    });
+
+    openModal("versionModal");
+
+}
+
+
+/* =========================================================
+   SIMULATOR
+   ========================================================= */
+
+function openSimulator(){
+
+    if(!currentDevice || !currentVersion)return;
+
+    document.getElementById("simulator")
+        .classList.add("open");
+
+    document.getElementById("simTitle").textContent=
+        currentDevice.name+
+        " — "+
+        currentVersion.name;
+
+    document.getElementById("infoDevice").textContent=
+        currentDevice.name;
+
+    document.getElementById("infoVersion").textContent=
+        currentVersion.name;
+
+    clearLog();
+
+    showOffScreen();
+
+}
+
+
+function closeSimulator(){
+
+    clearTimers();
+
+    document.getElementById("simulator")
+        .classList.remove("open");
+
+}
+
+
+function powerToggle(){
+
+    initAudio();
+
+    if(powerState){
+
+        shutdownDevice();
+
+    }else{
+
+        powerOn();
+
+    }
+
+}
+
+
+function powerOn(){
+
+    initAudio();
+
+    clearTimers();
+
+    currentError=null;
+    locked=false;
+
+    if(!hardware.power){
+
+        powerState=true;
+
+        showHardwareError(
+            "POWER FAILURE",
+            "The simulated power supply is not available."
+        );
+
+        return;
+
+    }
+
+    powerState=true;
+    booting=true;
+    shuttingDown=false;
+
+    updatePowerInfo();
+    updateTVPower();
+
+    log("Power button pressed.");
+
+    playPowerSound();
+
+    showBootSequence();
+
+}
+
+
+function showOffScreen(){
+
+    clearTimers();
+
+    powerState=false;
+    booting=false;
+    shuttingDown=false;
+
+    updatePowerInfo();
+    updateTVPower();
+
+    const screen=
+        document.getElementById("screen");
+
+    screen.className=
+        "screen black-screen";
+
+    screen.innerHTML=`
+
+        <div class="screen-center">
+
+            <div style="opacity:.35">
+                POWER OFF
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+function showBootSequence(){
+
+    const version=currentVersion;
+
+    if(!hardware.motherboard){
+
+        showHardwareError(
+            "MOTHERBOARD FAILURE",
+            "No motherboard was detected."
+        );
+
+        return;
+
+    }
+
+    if(!hardware.ram){
+
+        showHardwareError(
+            "MEMORY FAILURE",
+            "The simulated machine cannot detect RAM."
+        );
+
+        return;
+
+    }
+
+    if(!hardware.gpu){
+
+        showHardwareError(
+            "DISPLAY FAILURE",
+            "Graphics/display hardware is unavailable."
+        );
+
+        return;
+
+    }
+
+    if(!hardware.storage){
+
+        showHardwareError(
+            "STORAGE FAILURE",
+            "No bootable storage device was detected."
+        );
+
+        return;
+
+    }
+
+    log("Starting firmware.");
+
+    if(
+        version.family==="retro" ||
+        version.year<1995
+    ){
+
+        firmwareBoot();
+
+    }else if(
+        version.family==="windows" &&
+        version.year<=2000
+    ){
+
+        oldWindowsBoot();
+
+    }else if(
+        version.id==="winxp"
+    ){
+
+        xpBoot();
+
+    }else if(
+        version.id==="winvista" ||
+        version.id==="win7"
+    ){
+
+        vista7Boot();
+
+    }else if(
+        version.family==="windows"
+    ){
+
+        modernWindowsBoot();
+
+    }else if(
+        version.family==="mac" &&
+        version.id==="macclassic"
+    ){
+
+        classicMacBoot();
+
+    }else if(
+        version.family==="mac"
+    ){
+
+        modernMacBoot();
+
+    }else if(
+        version.family==="ios" ||
+        version.family==="ipados"
+    ){
+
+        iosBoot();
+
+    }else if(
+        version.family==="android"
+    ){
+
+        androidBoot();
+
+    }else{
+
+        consoleBoot();
+
+    }
+
+}
+
+
+/* =========================================================
+   BOOT SEQUENCES
+   ========================================================= */
+
+function firmwareBoot(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen boot-firmware";
+
+    screen.innerHTML=`
+
+        <div class="big">
+            ${escapeHTML(currentDevice.name)}
+        </div>
+
+        <div class="line">
+            Firmware Revision 1.00
+        </div>
+
+        <div class="line">
+            CPU CHECK ............ OK
+        </div>
+
+        <div class="line">
+            MEMORY TEST .......... OK
+        </div>
+
+        <div class="line">
+            STORAGE .............. DETECTED
+        </div>
+
+        <div class="line">
+            DISPLAY .............. OK
+        </div>
+
+        <div class="line" id="firmwareLine">
+            Searching for boot device...
+        </div>
+
+    `;
+
+    playBootTone();
+
+    let step=0;
+
+    bootInterval=setInterval(()=>{
+
+        step++;
+
+        const line=
+            document.getElementById("firmwareLine");
+
+        if(!line)return;
+
+        if(step===1){
+            line.textContent=
+                "Searching for boot device... 1";
+        }
+
+        if(step===2){
+            line.textContent=
+                "Searching for boot device... 2";
+        }
+
+        if(step===3){
+
+            line.textContent=
+                "Boot device found.";
+
+            log("Firmware found bootable storage.");
+
+        }
+
+        if(step>=4){
+
+            clearInterval(bootInterval);
+
+            showLockScreen();
+
+        }
+
+    },650);
+
+}
+
+
+function oldWindowsBoot(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen boot-classic-windows";
+
+    screen.innerHTML=`
+
+        <div class="screen-center">
+
+            <div class="win-old-logo">
+                ${escapeHTML(currentVersion.name)}
+            </div>
+
+            <div class="win-old-bar">
+                <span id="oldBootFill"></span>
+            </div>
+
+            <div
+                style="
+                    margin-top:12px;
+                    font-size:11px;
+                "
+            >
+                Starting Windows...
+            </div>
+
+        </div>
+
+    `;
+
+    playBootTone();
+
+    animateProgress(
+        "oldBootFill",
+        1800,
+        ()=>{
+            showLockScreen();
+        }
+    );
+
+}
+
+
+function xpBoot(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen boot-xp";
+
+    screen.innerHTML=`
+
+        <div class="screen-center">
+
+            <div class="xp-logo">
+                Windows XP
+                <small>style simulation</small>
+            </div>
+
+            <div class="xp-loading">
+                <span></span>
+            </div>
+
+        </div>
+
+    `;
+
+    playBootTone();
+
+    setTimeout(()=>{
+        showLockScreen();
+    },3200);
+
+}
+
+
+function vista7Boot(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen boot-vista";
+
+    screen.innerHTML=`
+
+        <div class="screen-center">
+
+            <div class="vista-orb"></div>
+
+            <div
+                style="
+                    margin-top:22px;
+                    font-size:18px;
+                "
+            >
+                ${escapeHTML(currentVersion.name)}
+            </div>
+
+            <div class="modern-ring"></div>
+
+        </div>
+
+    `;
+
+    playBootTone();
+
+    setTimeout(()=>{
+        showLockScreen();
+    },3500);
+
+}
+
+
+function modernWindowsBoot(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen boot-modern";
+
+    screen.innerHTML=`
+
+        <div class="screen-center">
+
+            <div class="modern-mark">
+                ${escapeHTML(currentVersion.name)}
+            </div>
+
+            <div class="modern-ring"></div>
+
+            <div
+                style="
+                    margin-top:17px;
+                    font-size:10px;
+                    opacity:.55;
+                "
+            >
+                Starting system
+            </div>
+
+        </div>
+
+    `;
+
+    playBootTone();
+
+    setTimeout(()=>{
+        showLockScreen();
+    },3300);
+
+}
+
+
+function classicMacBoot(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen boot-mac-classic";
+
+    screen.innerHTML=`
+
+        <div class="screen-center">
+
+            <div class="mac-happy">
+                :)
+            </div>
+
+            <div style="margin-top:15px">
+                Starting Macintosh-style system
+            </div>
+
+        </div>
+
+    `;
+
+    playBootTone();
+
+    setTimeout(()=>{
+        showLockScreen();
+    },2700);
+
+}
+
+
+function modernMacBoot(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen boot-macos";
+
+    screen.innerHTML=`
+
+        <div class="screen-center">
+
+            <div class="modern-mark">
+                ${escapeHTML(currentVersion.name)}
+            </div>
+
+            <div class="mac-progress">
+                <span id="macProgress"></span>
+            </div>
+
+        </div>
+
+    `;
+
+    playBootTone();
+
+    animateProgress(
+        "macProgress",
+        2600,
+        ()=>{
+            showLockScreen();
+        }
+    );
+
+}
+
+
+function iosBoot(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen boot-ios";
+
+    screen.innerHTML=`
+
+        <div class="screen-center">
+
+            <div class="ios-mark">
+                ${currentVersion.family==="ipados"
+                    ? "iPad"
+                    : "iPhone"}
+            </div>
+
+            <div class="ios-bar">
+                <span id="iosProgress"></span>
+            </div>
+
+        </div>
+
+    `;
+
+    playBootTone();
+
+    animateProgress(
+        "iosProgress",
+        2300,
+        ()=>{
+            showLockScreen();
+        }
+    );
+
+}
+
+
+function androidBoot(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen boot-android";
+
+    screen.innerHTML=`
+
+        <div class="screen-center">
+
+            <div class="android-mark">
+                ANDROID
+            </div>
+
+            <div class="android-glow">
+                ${escapeHTML(currentVersion.name)}
+            </div>
+
+            <div class="loading-dots">
+                <i></i><i></i><i></i><i></i>
+            </div>
+
+        </div>
+
+    `;
+
+    playBootTone();
+
+    setTimeout(()=>{
+        showLockScreen();
+    },2800);
+
+}
+
+
+function consoleBoot(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen boot-console";
+
+    let label="SYSTEM";
+
+    if(currentVersion.family==="xbox"){
+        label="XBOX";
+    }
+
+    if(currentVersion.family==="playstation"){
+        label="PLAYSTATION";
+    }
+
+    if(currentVersion.family==="nintendo"){
+        label="NINTENDO";
+    }
+
+    screen.innerHTML=`
+
+        <div class="screen-center">
+
+            <div class="console-symbol">
+                ${label}
+            </div>
+
+            <div class="console-sub">
+                ${escapeHTML(currentVersion.name)}
+            </div>
+
+            <div class="loading-dots">
+                <i></i><i></i><i></i>
+            </div>
+
+        </div>
+
+    `;
+
+    playBootTone();
+
+    setTimeout(()=>{
+        showLockScreen();
+    },3000);
+
+}
+
+
+function animateProgress(id,duration,done){
+
+    const element=
+        document.getElementById(id);
+
+    if(!element){
+
+        if(done)done();
+
+        return;
+
+    }
+
+    let progress=0;
+
+    clearInterval(bootInterval);
+
+    bootInterval=setInterval(()=>{
+
+        progress+=4;
+
+        if(progress>100){
+            progress=100;
+        }
+
+        element.style.width=
+            progress+"%";
+
+        if(progress>=100){
+
+            clearInterval(bootInterval);
+
+            if(done)done();
+
+        }
+
+    },duration/25);
+
+}
+
+
+/* =========================================================
+   LOCK SCREENS
+   ========================================================= */
+
+function showLockScreen(){
+
+    clearTimers();
+
+    booting=false;
+
+    locked=true;
+
+    log("Startup sequence completed.");
+
+    playStartupSound();
+
+    if(currentVersion.lock==="ios"){
+
+        showIOSLock();
+
+    }else if(currentVersion.lock==="android"){
+
+        showAndroidLock();
+
+    }else if(currentVersion.lock==="windows"){
+
+        showWindowsLock();
+
+    }else if(currentVersion.lock==="mac"){
+
+        showMacLock();
+
+    }else if(currentVersion.lock==="console"){
+
+        showConsoleLock();
+
+    }else{
+
+        showHomeScreen();
+
+    }
+
+}
+
+
+function showIOSLock(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen lock-ios";
+
+    screen.innerHTML=`
+
+        <div class="screen-center">
+
+            <div class="clock" id="iosClock">
+                ${getTime()}
+            </div>
+
+            <div class="date">
+                ${getDate()}
+            </div>
+
+            <div class="notifications">
+
+                <div class="notification">
+                    <b>System</b>
+                    <br>
+                    Device startup completed.
+                </div>
+
+                <div class="notification">
+                    <b>Console Simulator</b>
+                    <br>
+                    Error Lab is ready.
+                </div>
+
+            </div>
+
+            <button
+                class="login-button"
+                style="margin-top:20px"
+                onclick="unlockDevice()"
+            >
+                Swipe / Click to Unlock
+            </button>
+
+        </div>
+
+    `;
+
+}
+
+
+function showAndroidLock(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen lock-android";
+
+    screen.innerHTML=`
+
+        <div class="screen-center">
+
+            <div class="android-clock">
+                ${getTime()}
+            </div>
+
+            <div class="android-date">
+                ${getDate()}
+            </div>
+
+            <div class="notification" style="margin-top:30px">
+                System startup completed
+            </div>
+
+            <button
+                class="login-button"
+                style="margin-top:20px"
+                onclick="unlockDevice()"
+            >
+                Unlock
+            </button>
+
+        </div>
+
+    `;
+
+}
+
+
+function showWindowsLock(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen lock-windows";
+
+    screen.innerHTML=`
+
+        <div class="screen-center">
+
+            <div class="login-card">
+
+                <div class="avatar">
+                    U
+                </div>
+
+                <div class="login-name">
+                    User
+                </div>
+
+                <button
+                    class="login-button"
+                    onclick="unlockDevice()"
+                >
+                    Sign in
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+function showMacLock(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen lock-mac";
+
+    screen.innerHTML=`
+
+        <div class="screen-center">
+
+            <div class="mac-login">
+
+                <div class="avatar">
+                    U
+                </div>
+
+                <div style="margin-bottom:12px">
+                    User
+                </div>
+
+                <button
+                    class="login-button"
+                    onclick="unlockDevice()"
+                >
+                    Log In
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+function showConsoleLock(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen lock-console";
+
+    screen.innerHTML=`
+
+        <div class="screen-center">
+
+            <div style="font-size:30px;font-weight:bold">
+                ${escapeHTML(currentVersion.name)}
+            </div>
+
+            <div style="opacity:.65;margin-top:12px">
+                Press the button to continue
+            </div>
+
+            <button
+                class="login-button"
+                style="margin-top:20px"
+                onclick="unlockDevice()"
+            >
+                Continue
+            </button>
+
+        </div>
+
+    `;
+
+}
+
+
+function unlockDevice(){
+
+    locked=false;
+
+    log("User unlocked the device.");
+
+    showHomeScreen();
+
+}
+
+
+/* =========================================================
+   HOME SCREEN ROUTER
+   ========================================================= */
+
+function showHomeScreen(){
+
+    if(currentError){
+
+        showSystemError(currentError);
+
+        return;
+
+    }
+
+    if(currentVersion.family==="windows"){
+
+        showWindows();
+
+    }else if(currentVersion.family==="mac"){
+
+        showMac();
+
+    }else if(
+        currentVersion.family==="ios" ||
+        currentVersion.family==="ipados"
+    ){
+
+        showIOS();
+
+    }else if(currentVersion.family==="android"){
+
+        showAndroid();
+
+    }else if(currentVersion.family==="xbox"){
+
+        showXbox();
+
+    }else if(currentVersion.family==="playstation"){
+
+        showPlayStation();
+
+    }else if(currentVersion.family==="nintendo"){
+
+        showNintendo();
+
+    }else{
+
+        showRetro();
+
+    }
+
+}
+
+
+/* =========================================================
+   WINDOWS HOME SCREENS
+   ========================================================= */
+
+function showWindows(){
+
+    const style=currentVersion.style;
+
+    if(style==="windows95"){
+
+        showWindows95();
+
+    }else if(style==="windows-xp"){
+
+        showWindowsXP();
+
+    }else if(style==="windows7"){
+
+        showWindows7();
+
+    }else if(style==="windows8"){
+
+        showWindows8();
+
+    }else if(style==="windows10"){
+
+        showWindows10();
+
+    }else{
+
+        showWindows11();
+
+    }
+
+}
+
+
+function showWindows95(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className="screen windows95";
+
+    screen.innerHTML=`
+
+        <div class="win95-desktop">
+
+            <div
+                class="desktop-icon"
+                ondblclick="openFakeApp('My Computer')"
+            >
+                <div class="icon">PC</div>
+                My Computer
+            </div>
+
+            <div
+                class="desktop-icon"
+                ondblclick="openFakeApp('Network')"
+            >
+                <div class="icon">NET</div>
+                Network
+            </div>
+
+            <div
+                class="desktop-icon"
+                ondblclick="openErrorLab()"
+            >
+                <div class="icon">ERR</div>
+                Error Lab
+            </div>
+
+            <div
+                class="desktop-icon"
+                ondblclick="openFakeApp('Recycle Bin')"
+            >
+                <div class="icon">BIN</div>
+                Recycle Bin
+            </div>
+
+            <div class="win95-menu" id="win95Menu">
+
+                <div class="menu-head">
+                    ${escapeHTML(currentVersion.name)}
+                </div>
+
+                <div class="win95-menu-items">
+
+                    <div class="win95-menu-item"
+                         onclick="openFakeApp('Programs')">
+                        Programs
+                    </div>
+
+                    <div class="win95-menu-item"
+                         onclick="openFakeApp('Documents')">
+                        Documents
+                    </div>
+
+                    <div class="win95-menu-item"
+                         onclick="openFakeApp('Settings')">
+                        Settings
+                    </div>
+
+                    <div class="win95-menu-item"
+                         onclick="openErrorLab()">
+                        Error Lab
+                    </div>
+
+                    <div class="win95-menu-item"
+                         onclick="restartDevice()">
+                        Shut Down...
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="win95-taskbar">
+
+            <button
+                class="win95-start"
+                onclick="toggleMenu('win95Menu')"
+            >
+                Start
+            </button>
+
+            <div class="win95-clock">
+                ${getTime()}
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+function showWindowsXP(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className="screen windows-xp";
+
+    screen.innerHTML=`
+
+        <div class="xp-desktop">
+
+            <div class="xp-icon"
+                 ondblclick="openFakeApp('My Computer')">
+                <div class="iconbox">PC</div>
+                My Computer
+            </div>
+
+            <div class="xp-icon"
+                 ondblclick="openFakeApp('My Documents')">
+                <div class="iconbox">DOC</div>
+                My Documents
+            </div>
+
+            <div class="xp-icon"
+                 ondblclick="openErrorLab()">
+                <div class="iconbox">ERR</div>
+                Error Lab
+            </div>
+
+            <div class="xp-menu" id="xpMenu">
+
+                <div class="xp-menu-top">
+
+                    <div class="xp-avatar">
+                        U
+                    </div>
+
+                    User
+
+                </div>
+
+                <div class="xp-menu-columns">
+
+                    <div class="xp-menu-column">
+
+                        <div class="xp-item"
+                             onclick="openFakeApp('Internet')">
+                            Internet
+                        </div>
+
+                        <div class="xp-item"
+                             onclick="openFakeApp('E-Mail')">
+                            E-Mail
+                        </div>
+
+                        <div class="xp-item"
+                             onclick="openFakeApp('My Documents')">
+                            My Documents
+                        </div>
+
+                        <div class="xp-item"
+                             onclick="openFakeApp('My Computer')">
+                            My Computer
+                        </div>
+
+                        <div class="xp-item"
+                             onclick="openErrorLab()">
+                            Error Lab
+                        </div>
+
+                    </div>
+
+                    <div class="xp-menu-column">
+
+                        <div class="xp-item">
+                            Control Panel
+                        </div>
+
+                        <div class="xp-item">
+                            Printers
+                        </div>
+
+                        <div class="xp-item">
+                            Help and Support
+                        </div>
+
+                        <div class="xp-item">
+                            Search
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="xp-taskbar">
+
+            <button
+                class="xp-start"
+                onclick="toggleMenu('xpMenu')"
+            >
+                start
+            </button>
+
+            <div class="xp-clock">
+                ${getTime()}
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+function showWindows7(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className="screen windows7";
+
+    screen.innerHTML=`
+
+        <div class="win7-desktop">
+
+            <div class="desktop-icon">
+                <div class="iconbox"></div>
+                Computer
+            </div>
+
+            <div class="desktop-icon">
+                <div class="iconbox"></div>
+                Documents
+            </div>
+
+            <div
+                class="desktop-icon"
+                ondblclick="openErrorLab()"
+            >
+                <div class="iconbox">!</div>
+                Error Lab
+            </div>
+
+            <div class="win7-menu" id="win7Menu">
+
+                <div class="win7-menu-top">
+
+                    <div class="avatar"
+                         style="
+                            width:38px;
+                            height:38px;
+                            margin:0 10px 0 0;
+                         ">
+                        U
+                    </div>
+
+                    User
+
+                </div>
+
+                <div class="win7-menu-list">
+
+                    <div class="win7-col">
+
+                        <div class="win7-item"
+                             onclick="openFakeApp('Internet')">
+                            Internet
+                        </div>
+
+                        <div class="win7-item"
+                             onclick="openFakeApp('Documents')">
+                            Documents
+                        </div>
+
+                        <div class="win7-item"
+                             onclick="openFakeApp('Pictures')">
+                            Pictures
+                        </div>
+
+                        <div class="win7-item"
+                             onclick="openFakeApp('Computer')">
+                            Computer
+                        </div>
+
+                        <div class="win7-item"
+                             onclick="openErrorLab()">
+                            Error Lab
+                        </div>
+
+                    </div>
+
+                    <div class="win7-col">
+
+                        <div class="win7-item">
+                            Control Panel
+                        </div>
+
+                        <div class="win7-item">
+                            Devices
+                        </div>
+
+                        <div class="win7-item">
+                            Default Programs
+                        </div>
+
+                        <div class="win7-item">
+                            Help and Support
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="win7-taskbar">
+
+            <button
+                class="win7-start"
+                onclick="toggleMenu('win7Menu')"
+            >
+                ⊞
+            </button>
+
+            <button
+                class="win7-task"
+                onclick="openFakeApp('Explorer')"
+            >
+                📁
+            </button>
+
+            <button
+                class="win7-task"
+                onclick="openErrorLab()"
+            >
+                !
+            </button>
+
+            <div class="win7-clock">
+                ${getTime()}
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+function showWindows8(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className="screen windows8";
+
+    screen.innerHTML=`
+
+        <div class="win8-start">
+
+            <div class="win8-title">
+                Start
+            </div>
+
+            <div class="win8-tiles">
+
+                <div class="tile large"
+                     onclick="openFakeApp('Mail')">
+                    Mail
+                </div>
+
+                <div class="tile green"
+                     onclick="openFakeApp('Calendar')">
+                    Calendar
+                </div>
+
+                <div class="tile orange">
+                    Photos
+                </div>
+
+                <div class="tile purple">
+                    Music
+                </div>
+
+                <div class="tile red"
+                     onclick="openErrorLab()">
+                    Error Lab
+                </div>
+
+                <div class="tile">
+                    Store
+                </div>
+
+                <div class="tile green">
+                    People
+                </div>
+
+                <div class="tile orange">
+                    Weather
+                </div>
+
+                <div class="tile purple">
+                    Maps
+                </div>
+
+                <div class="tile">
+                    Desktop
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+function showWindows10(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className="screen windows10";
+
+    screen.innerHTML=`
+
+        <div class="win10-desktop">
+
+            <div class="desktop-icon">
+                <div class="iconbox"></div>
+                This PC
+            </div>
+
+            <div class="desktop-icon">
+                <div class="iconbox"></div>
+                Documents
+            </div>
+
+            <div
+                class="desktop-icon"
+                ondblclick="openErrorLab()"
+            >
+                <div class="iconbox">!</div>
+                Error Lab
+            </div>
+
+            <div class="win10-menu" id="win10Menu">
+
+                <div class="win10-menu-content">
+
+                    <div class="win10-list">
+
+                        <div onclick="openFakeApp('Documents')">
+                            Documents
+                        </div>
+
+                        <div onclick="openFakeApp('Pictures')">
+                            Pictures
+                        </div>
+
+                        <div onclick="openFakeApp('Settings')">
+                            Settings
+                        </div>
+
+                        <div onclick="openErrorLab()">
+                            Error Lab
+                        </div>
+
+                        <div onclick="shutdownDevice()">
+                            Power
+                        </div>
+
+                    </div>
+
+                    <div class="win10-tiles">
+
+                        <div class="win10-tile">
+                            Mail
+                        </div>
+
+                        <div class="win10-tile">
+                            Calendar
+                        </div>
+
+                        <div class="win10-tile">
+                            Photos
+                        </div>
+
+                        <div class="win10-tile">
+                            Store
+                        </div>
+
+                        <div
+                            class="win10-tile"
+                            onclick="openErrorLab()"
+                        >
+                            Error Lab
+                        </div>
+
+                        <div class="win10-tile">
+                            Weather
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="win10-taskbar">
+
+            <button
+                class="win10-start"
+                onclick="toggleMenu('win10Menu')"
+            >
+                ⊞
+            </button>
+
+            <div class="win10-search">
+                Search
+            </div>
+
+            <button class="win10-task">
+                📁
+            </button>
+
+            <button
+                class="win10-task"
+                onclick="openErrorLab()"
+            >
+                !
+            </button>
+
+        </div>
+
+    `;
+
+}
+
+
+function showWindows11(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className="screen windows11";
+
+    screen.innerHTML=`
+
+        <div class="win11-desktop">
+
+            <div class="desktop-icon">
+                <div class="iconbox"></div>
+                This PC
+            </div>
+
+            <div class="desktop-icon">
+                <div class="iconbox"></div>
+                Files
+            </div>
+
+            <div
+                class="desktop-icon"
+                ondblclick="openErrorLab()"
+            >
+                <div class="iconbox">!</div>
+                Error Lab
+            </div>
+
+            <div class="win11-menu" id="win11Menu">
+
+                <div class="win11-search">
+                    Search apps, settings, files...
+                </div>
+
+                <h3 style="margin-top:25px">
+                    Pinned
+                </h3>
+
+                <div class="win11-pinned">
+
+                    ${[
+                        "▣",
+                        "▤",
+                        "◉",
+                        "✉",
+                        "▦",
+                        "⚙",
+                        "▣",
+                        "♫",
+                        "☁",
+                        "!",
+                        "⌕",
+                        "▥"
+                    ].map((icon,i)=>`
+
+                        <div
+                            class="win11-app"
+                            onclick="${
+                                i===9
+                                ? "openErrorLab()"
+                                : "openFakeApp('App')"
+                            }"
+                        >
+
+                            <div class="win11-app-icon">
+                                ${icon}
+                            </div>
+
+                            ${
+                                i===9
+                                ? "Error Lab"
+                                : "App "+(i+1)
+                            }
+
+                        </div>
+
+                    `).join("")}
+
+                </div>
+
+                <div style="
+                    position:absolute;
+                    bottom:15px;
+                    left:20px;
+                    right:20px;
+                    border-top:1px solid #ffffff18;
+                    padding-top:12px;
+                ">
+
+                    <b>User</b>
+
+                    <button
+                        class="action"
+                        style="float:right"
+                        onclick="shutdownDevice()"
+                    >
+                        Power
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="win11-taskbar">
+
+            <button
+                class="win11-task"
+                onclick="toggleMenu('win11Menu')"
+            >
+                ⊞
+            </button>
+
+            <button
+                class="win11-task"
+                onclick="openFakeApp('Search')"
+            >
+                ⌕
+            </button>
+
+            <button
+                class="win11-task"
+                onclick="openFakeApp('Explorer')"
+            >
+                📁
+            </button>
+
+            <button
+                class="win11-task"
+                onclick="openErrorLab()"
+            >
+                !
+            </button>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   MAC HOME
+   ========================================================= */
+
+function showMac(){
+
+    if(currentVersion.id==="macclassic"){
+
+        showClassicMac();
+
+    }else{
+
+        showModernMac();
+
+    }
+
+}
+
+
+function showClassicMac(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className="screen mac-classic";
+
+    screen.innerHTML=`
+
+        <div class="mac-classic-desktop">
+
+            <div class="mac-menu-bar">
+
+                <b></b>
+                File
+                <span style="margin-left:12px">Edit</span>
+                <span>View</span>
+                <span>Special</span>
+
+                <span style="margin-left:auto">
+                    ${getTime()}
+                </span>
+
+            </div>
+
+            <div
+                class="mac-classic-icon"
+                ondblclick="openFakeApp('Macintosh HD')"
+            >
+                <div class="box">
+                    HD
+                </div>
+                Macintosh HD
+            </div>
+
+            <div
+                class="mac-classic-icon"
+                ondblclick="openErrorLab()"
+            >
+                <div class="box">
+                    !
+                </div>
+                Error Lab
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+function showModernMac(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className="screen mac-modern";
+
+    screen.innerHTML=`
+
+        <div class="mac-desktop">
+
+            <div class="mac-modern-menu">
+
+                <b style="margin-right:16px"></b>
+
+                <span>Finder</span>
+                <span>File</span>
+                <span>Edit</span>
+                <span>View</span>
+                <span>Go</span>
+                <span>Window</span>
+                <span>Help</span>
+
+                <span style="margin-left:auto">
+                    ${getTime()}
+                </span>
+
+            </div>
+
+            <div
+                class="desktop-icon"
+                style="position:absolute;top:42px;right:20px"
+                ondblclick="openFakeApp('Macintosh HD')"
+            >
+                <div class="iconbox">
+                    HD
+                </div>
+                Macintosh HD
+            </div>
+
+            <div
+                class="desktop-icon"
+                style="position:absolute;top:115px;right:20px"
+                ondblclick="openErrorLab()"
+            >
+                <div class="iconbox">
+                    !
+                </div>
+                Error Lab
+            </div>
+
+            <div class="mac-dock">
+
+                <div
+                    class="dock-icon"
+                    onclick="openFakeApp('Finder')"
+                >
+                    F
+                </div>
+
+                <div
+                    class="dock-icon"
+                    onclick="openFakeApp('Browser')"
+                >
+                    ◉
+                </div>
+
+                <div
+                    class="dock-icon"
+                    onclick="openFakeApp('Mail')"
+                >
+                    ✉
+                </div>
+
+                <div
+                    class="dock-icon"
+                    onclick="openFakeApp('Settings')"
+                >
+                    ⚙
+                </div>
+
+                <div
+                    class="dock-icon"
+                    onclick="openErrorLab()"
+                >
+                    !
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   IOS HOME
+   ========================================================= */
+
+function showIOS(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen "+
+        (
+            currentVersion.family==="ipados"
+            ? "ipados"
+            : currentVersion.style
+        );
+
+    const isIPad=
+        currentVersion.family==="ipados";
+
+    const count=
+        isIPad ? 18 : 12;
+
+    const apps=[
+        "Phone",
+        "Messages",
+        "Mail",
+        "Photos",
+        "Camera",
+        "Maps",
+        "Music",
+        "Weather",
+        "Notes",
+        "Settings",
+        "Browser",
+        "Error Lab",
+        "Calendar",
+        "Files",
+        "Clock",
+        "Store",
+        "Videos",
+        "Contacts"
+    ];
+
+    screen.innerHTML=`
+
+        <div class="mobile-status">
+            <span>${getTime()}</span>
+            <span>▮▮▮  Wi-Fi  🔋</span>
+        </div>
+
+        <div
+            class="
+                mobile-app-grid
+                ${isIPad ? "ipad-grid" : ""}
+            "
+        >
+
+            ${apps.slice(0,count).map((app,i)=>`
+
+                <div
+                    class="mobile-app"
+                    onclick="${
+                        app==="Error Lab"
+                        ? "openErrorLab()"
+                        : "openFakeApp('"+app+"')"
+                    }"
+                >
+
+                    <div class="mobile-app-icon">
+                        ${
+                            app==="Error Lab"
+                            ? "!"
+                            : app.charAt(0)
+                        }
+                    </div>
+
+                    ${app}
+
+                </div>
+
+            `).join("")}
+
+        </div>
+
+        <div class="mobile-dock">
+
+            <div
+                class="mobile-app-icon"
+                onclick="openFakeApp('Phone')"
+            >
+                ☎
+            </div>
+
+            <div
+                class="mobile-app-icon"
+                onclick="openFakeApp('Messages')"
+            >
+                ●
+            </div>
+
+            <div
+                class="mobile-app-icon"
+                onclick="openFakeApp('Browser')"
+            >
+                ◉
+            </div>
+
+            <div
+                class="mobile-app-icon"
+                onclick="openErrorLab()"
+            >
+                !
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   ANDROID HOME
+   ========================================================= */
+
+function showAndroid(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen "+
+        currentVersion.style;
+
+    const apps=[
+        "Phone",
+        "Messages",
+        "Camera",
+        "Gallery",
+        "Maps",
+        "Browser",
+        "Music",
+        "Files",
+        "Settings",
+        "Store",
+        "Clock",
+        "Error Lab"
+    ];
+
+    screen.innerHTML=`
+
+        <div class="mobile-status">
+            <span>${getTime()}</span>
+            <span>▮▮▮  Wi-Fi  🔋</span>
+        </div>
+
+        <div class="mobile-app-grid android-app-grid">
+
+            ${apps.map(app=>`
+
+                <div
+                    class="mobile-app"
+                    onclick="${
+                        app==="Error Lab"
+                        ? "openErrorLab()"
+                        : "openFakeApp('"+app+"')"
+                    }"
+                >
+
+                    <div class="mobile-app-icon">
+                        ${
+                            app==="Error Lab"
+                            ? "!"
+                            : app.charAt(0)
+                        }
+                    </div>
+
+                    ${app}
+
+                </div>
+
+            `).join("")}
+
+        </div>
+
+        <div class="android-nav">
+
+            ◀
+            ●
+            ▣
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   XBOX
+   ========================================================= */
+
+function showXbox(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className="screen xbox-dashboard";
+
+    screen.innerHTML=`
+
+        <div class="console-header">
+
+            <b>Dashboard</b>
+
+            <div class="console-profile">
+                User
+            </div>
+
+        </div>
+
+        <div class="console-panels">
+
+            <div
+                class="console-panel active"
+                onclick="openFakeApp('Games')"
+            >
+                <h3>Games</h3>
+                <p>Library</p>
+            </div>
+
+            <div
+                class="console-panel"
+                onclick="openFakeApp('Store')"
+            >
+                <h3>Store</h3>
+                <p>Browse</p>
+            </div>
+
+            <div
+                class="console-panel"
+                onclick="openFakeApp('Friends')"
+            >
+                <h3>Friends</h3>
+                <p>0 online</p>
+            </div>
+
+            <div
+                class="console-panel"
+                onclick="openErrorLab()"
+            >
+                <h3>Error Lab</h3>
+                <p>System tools</p>
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   PLAYSTATION
+   ========================================================= */
+
+function showPlayStation(){
+
+    const screen=document.getElementById("screen");
+
+    if(currentVersion.id==="ps3"){
+
+        screen.className="screen ps3-xmb";
+
+        screen.innerHTML=`
+
+            <div class="ps3-row">
+
+                <div class="ps3-item">
+                    Users
+                </div>
+
+                <div class="ps3-item">
+                    Settings
+                </div>
+
+                <div class="ps3-item">
+                    Game
+                </div>
+
+                <div class="ps3-item">
+                    Network
+                </div>
+
+                <div
+                    class="ps3-item"
+                    onclick="openErrorLab()"
+                >
+                    Error Lab
+                </div>
+
+                <div class="ps3-item">
+                    Store
+                </div>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+    screen.className=
+        "screen "+
+        (
+            currentVersion.id==="ps5"
+            ? "ps5-dashboard"
+            : "ps4-dashboard"
+        );
+
+    screen.innerHTML=`
+
+        <div class="console-header">
+
+            <b>
+                ${escapeHTML(currentVersion.name)}
+            </b>
+
+            <div class="console-profile">
+                User
+            </div>
+
+        </div>
+
+        <div class="console-panels">
+
+            <div class="console-panel active">
+                Games
+            </div>
+
+            <div class="console-panel">
+                Media
+            </div>
+
+            <div class="console-panel">
+                Store
+            </div>
+
+            <div
+                class="console-panel"
+                onclick="openErrorLab()"
+            >
+                Error Lab
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   NINTENDO
+   ========================================================= */
+
+function showNintendo(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen nintendo-dashboard";
+
+    const apps=[
+        "Games",
+        "Album",
+        "Store",
+        "Controllers",
+        "Settings",
+        "News",
+        "Users",
+        "Error Lab"
+    ];
+
+    screen.innerHTML=`
+
+        <div class="console-header">
+
+            <b>
+                ${escapeHTML(currentVersion.name)}
+            </b>
+
+            <div class="console-profile">
+                User
+            </div>
+
+        </div>
+
+        <div class="nintendo-grid">
+
+            ${apps.map(app=>`
+
+                <div
+                    class="nintendo-item"
+                    onclick="${
+                        app==="Error Lab"
+                        ? "openErrorLab()"
+                        : "openFakeApp('"+app+"')"
+                    }"
+                >
+
+                    <div
+                        style="
+                            width:48px;
+                            height:48px;
+                            border-radius:50%;
+                            background:#ddd;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            font-weight:bold;
+                        "
+                    >
+                        ${
+                            app==="Error Lab"
+                            ? "!"
+                            : app.charAt(0)
+                        }
+                    </div>
+
+                    <div style="margin-top:8px">
+                        ${app}
+                    </div>
+
+                </div>
+
+            `).join("")}
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   RETRO
+   ========================================================= */
+
+function showRetro(){
+
+    const screen=document.getElementById("screen");
+
+    screen.className=
+        "screen boot-firmware";
+
+    screen.innerHTML=`
+
+        <div class="big">
+            ${escapeHTML(currentVersion.name)}
+        </div>
+
+        <div class="line">
+            C:\\>
+        </div>
+
+        <div class="line">
+            SYSTEM READY
+        </div>
+
+        <div class="line">
+            TYPE HELP FOR COMMANDS
+        </div>
+
+        <div class="line"
+             style="margin-top:15px"
+             onclick="openErrorLab()"
+        >
+            C:\\> ERRORLAB
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   FAKE APPLICATIONS
+   ========================================================= */
+
+function openFakeApp(name){
+
+    const existing=
+        document.querySelector(".fake-window");
+
+    if(existing){
+        existing.remove();
+    }
+
+    const screen=
+        document.getElementById("screen");
+
+    const windowElement=
+        document.createElement("div");
+
+    windowElement.className="fake-window";
+
+    windowElement.innerHTML=`
+
+        <div class="fake-title">
+
+            ${escapeHTML(name)}
+
+            <button
+                onclick="this.closest('.fake-window').remove()"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div class="fake-content">
+
+            <h2>${escapeHTML(name)}</h2>
+
+            <p>
+                This application is running inside the
+                ${escapeHTML(currentVersion.name)}
+                simulation.
+            </p>
+
+            <button
+                class="action"
+                onclick="openErrorLab()"
+            >
+                Open Error Lab
+            </button>
+
+            <button
+                class="action"
+                onclick="this.closest('.fake-window').remove()"
+            >
+                Close
+            </button>
+
+        </div>
+
+    `;
+
+    screen.appendChild(windowElement);
+
+    playMenuSound();
+
+}
+
+
+/* =========================================================
+   MENUS
+   ========================================================= */
+
+function toggleMenu(id){
+
+    const menu=document.getElementById(id);
+
+    if(!menu)return;
+
+    menu.classList.toggle("open");
+
+    playMenuSound();
+
+}
+
+
+/* =========================================================
+   ERROR LAB
+   ========================================================= */
+
+function openErrorLab(){
+
+    openModal("errorModal");
+
+}
+
+
+function labError(type){
+
+    if(!currentDevice){
+
+        showPage("devices");
+
+        return;
+
+    }
+
+    openSimulator();
+
+    applyError(type);
+
+}
+
+
+function applyError(type){
+
+    closeModal("errorModal");
+
+    clearTimers();
+
+    currentError=type;
+
+    booting=false;
+    locked=false;
+
+    log(
+        "Error injected: "+
+        type
+    );
+
+    playErrorSound();
+
+    showSystemError(type);
+
+}
+
+
+function showSystemError(type){
+
+    const screen=
+        document.getElementById("screen");
+
+    let title="SYSTEM ERROR";
+    let code="ERR-SYS-000";
+    let message=
+        "The simulated operating system encountered a problem.";
+
+    let color="blue";
+
+    switch(type){
+
+        case"missing":
+            title="SYSTEM FILE NOT FOUND";
+            code="ERR-BOOT-404";
+            message=
+                "A required operating-system file could not be found.";
+            color="blue";
+            break;
+
+        case"corrupt":
+            title="SYSTEM CORRUPTION";
+            code="ERR-SYS-CORRUPT";
+            message=
+                "The simulated system data is damaged.";
+            color="blue";
+            break;
+
+        case"update":
+            title="UPDATE FAILED";
+            code="ERR-UPD-FAIL";
+            message=
+                "The system update did not complete successfully.";
+            color="blue";
+            break;
+
+        case"loop":
+            title="STARTUP LOOP";
+            code="ERR-BOOT-LOOP";
+            message=
+                "The system repeatedly returns to startup.";
+            color="black";
+            break;
+
+        case"freeze":
+            title="SYSTEM NOT RESPONDING";
+            code="ERR-FREEZE";
+            message=
+                "The interface has stopped responding.";
+            color="blue";
+            break;
+
+        case"black":
+            title="DISPLAY FAILURE";
+            code="ERR-DISPLAY";
+            message=
+                "The system is running but the simulated display is unavailable.";
+            color="black";
+            break;
+
+        case"storage":
+            title="STORAGE FAILURE";
+            code="ERR-DISK";
+            message=
+                "The boot drive cannot be read.";
+            color="red";
+            break;
+
+        case"network":
+            title="NETWORK UNAVAILABLE";
+            code="ERR-NET";
+            message=
+                "The operating system cannot connect to the simulated network.";
+            color="blue";
+            break;
+
+        case"controller":
+            title="CONTROLLER DISCONNECTED";
+            code="ERR-CTRL";
+            message=
+                "The input controller is no longer connected.";
+            color="blue";
+            break;
+
+        case"kernel":
+            title="SYSTEM CRASH";
+            code="ERR-KERNEL";
+            message=
+                "A critical system component stopped unexpectedly.";
+            color="blue";
+            break;
+
+        case"ram":
+            title="MEMORY ERROR";
+            code="ERR-RAM";
+            message=
+                "The system cannot use the installed memory.";
+            color="red";
+            break;
+
+        case"gpu":
+            title="GRAPHICS ERROR";
+            code="ERR-GPU";
+            message=
+                "The graphics subsystem could not initialize.";
+            color="black";
+            break;
+
+        case"fan":
+            title="COOLING WARNING";
+            code="ERR-THERMAL";
+            message=
+                "The simulated cooling hardware is unavailable.";
+            color="red";
+            break;
+
+        case"nosystem":
+            title="NO BOOTABLE SYSTEM";
+            code="ERR-NO-OS";
+            message=
+                "No operating system was found on the simulated storage.";
+            color="black";
+            break;
+
+        case"random":
+            title="UNEXPECTED GLITCH";
+            code="ERR-RANDOM";
+            message=
+                "The simulator generated a random software fault.";
+            color="blue";
+            break;
+
+    }
+
+    screen.className=
+        "screen error-screen "+color;
+
+    screen.innerHTML=`
+
+        <div class="error-code">
+            ${escapeHTML(code)}
+        </div>
+
+        <h2>
+            ${escapeHTML(title)}
+        </h2>
+
+        <p>
+            ${escapeHTML(message)}
+        </p>
+
+        <p>
+            Device:
+            ${escapeHTML(currentDevice.name)}
+            <br>
+            Version:
+            ${escapeHTML(currentVersion.name)}
+        </p>
+
+        <div class="error-actions">
+
+            <button
+                class="action"
+                onclick="repairError()"
+            >
+                Repair
+            </button>
+
+            <button
+                class="action"
+                onclick="restartDevice()"
+            >
+                Restart
+            </button>
+
+            <button
+                class="action"
+                onclick="shutdownDevice()"
+            >
+                Shut down
+            </button>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   REPAIR
+   ========================================================= */
+
+function repairError(){
+
+    const screen=
+        document.getElementById("screen");
+
+    log("Starting recovery.");
+
+    screen.className=
+        "screen boot-firmware";
+
+    screen.innerHTML=`
+
+        <div class="big">
+            SYSTEM RECOVERY
+        </div>
+
+        <div id="repairLines">
+
+            <div class="line">
+                Checking system...
+            </div>
+
+        </div>
+
+        <div class="boot-progress">
+
+            <div
+                id="repairProgress"
+                class="boot-progress-fill"
+                style="background:#55c7ff"
+            ></div>
+
+        </div>
+
+    `;
+
+    let progress=0;
+
+    clearTimers();
+
+    bootInterval=setInterval(()=>{
+
+        progress+=5;
+
+        const fill=
+            document.getElementById(
+                "repairProgress"
+            );
+
+        if(fill){
+            fill.style.width=
+                progress+"%";
+        }
+
+        if(progress===25){
+
+            addRepairLine(
+                "Checking system files..."
+            );
+
+        }
+
+        if(progress===50){
+
+            addRepairLine(
+                "Rebuilding system information..."
+            );
+
+        }
+
+        if(progress===75){
+
+            addRepairLine(
+                "Testing startup configuration..."
+            );
+
+        }
+
+        if(progress>=100){
+
+            clearInterval(bootInterval);
+
+            currentError=null;
+
+            log("Recovery completed.");
+
+            addRepairLine(
+                "Recovery completed successfully."
+            );
+
+            setTimeout(()=>{
+                restartDevice();
+            },900);
+
+        }
+
+    },100);
+
+}
+
+
+function addRepairLine(text){
+
+    const box=
+        document.getElementById(
+            "repairLines"
+        );
+
+    if(!box)return;
+
+    const line=
+        document.createElement("div");
+
+    line.className="line";
+
+    line.textContent=text;
+
+    box.appendChild(line);
+
+}
+
+
+/* =========================================================
+   SHUTDOWN
+   ========================================================= */
+
+function shutdownDevice(){
+
+    if(!powerState)return;
+
+    clearTimers();
+
+    shuttingDown=true;
+    booting=false;
+
+    log("Shutdown requested.");
+
+    playShutdownSound();
+
+    const screen=
+        document.getElementById("screen");
+
+    screen.className=
+        "screen boot-modern";
+
+    let stages=[];
+
+    if(currentVersion.family==="windows"){
+
+        stages=[
+            "Saving system state...",
+            "Closing applications...",
+            "Stopping system services...",
+            "Turning off..."
+        ];
+
+    }else if(
+        currentVersion.family==="mac"
+    ){
+
+        stages=[
+            "Closing applications...",
+            "Saving changes...",
+            "Stopping services...",
+            "Powering off..."
+        ];
+
+    }else if(
+        currentVersion.family==="ios" ||
+        currentVersion.family==="ipados"
+    ){
+
+        stages=[
+            "Closing applications...",
+            "Saving device state...",
+            "Powering off..."
+        ];
+
+    }else if(
+        currentVersion.family==="android"
+    ){
+
+        stages=[
+            "Stopping applications...",
+            "Saving system state...",
+            "Powering off..."
+        ];
+
+    }else{
+
+        stages=[
+            "Closing software...",
+            "Saving system state...",
+            "Stopping hardware...",
+            "Powering off..."
+        ];
+
+    }
+
+    let index=0;
+
+    screen.innerHTML=`
+
+        <div class="screen-center">
+
+            <div class="modern-mark">
+                ${escapeHTML(currentVersion.name)}
+            </div>
+
+            <div
+                id="shutdownText"
+                style="
+                    margin-top:20px;
+                    font-size:12px;
+                    opacity:.7;
+                "
+            >
+                ${stages[0]}
+            </div>
+
+            <div class="modern-ring"></div>
+
+        </div>
+
+    `;
+
+    shutdownTimer=setInterval(()=>{
+
+        index++;
+
+        const text=
+            document.getElementById(
+                "shutdownText"
+            );
+
+        if(index<stages.length){
+
+            if(text){
+                text.textContent=
+                    stages[index];
+            }
+
+            log(stages[index]);
+
+        }else{
+
+            clearInterval(shutdownTimer);
+
+            powerState=false;
+            shuttingDown=false;
+
+            updatePowerInfo();
+            updateTVPower();
+
+            showOffScreen();
+
+        }
+
+    },700);
+
+}
+
+
+function restartDevice(){
+
+    if(!powerState){
+
+        powerOn();
+
+        return;
+
+    }
+
+    log("Restart requested.");
+
+    currentError=null;
+
+    clearTimers();
+
+    powerState=true;
+
+    showRestartScreen();
+
+}
+
+
+function showRestartScreen(){
+
+    const screen=
+        document.getElementById("screen");
+
+    screen.className=
+        "screen boot-modern";
+
+    screen.innerHTML=`
+
+        <div class="screen-center">
+
+            <div class="modern-mark">
+                Restarting
+            </div>
+
+            <div class="modern-ring"></div>
+
+        </div>
+
+    `;
+
+    playShutdownSound();
+
+    setTimeout(()=>{
+
+        showBootSequence();
+
+    },1300);
+
+}
+
+
+/* =========================================================
+   LOCK BUTTON
+   ========================================================= */
+
+function lockDevice(){
+
+    if(!powerState)return;
+
+    locked=true;
+
+    showLockScreen();
+
+}
+
+
+/* =========================================================
+   HARDWARE
+   ========================================================= */
+
+function toggleHardware(part){
+
+    hardware[part]=!hardware[part];
+
+    updateHardware();
+
+    log(
+        part+
+        ": "+
+        (
+            hardware[part]
+            ? "installed"
+            : "removed"
+        )
+    );
+
+}
+
+
+function updateHardware(){
+
+    const labels={
+        motherboard:"Motherboard",
+        ram:"RAM",
+        storage:"Storage",
+        gpu:"GPU / display",
+        fan:"Cooling",
+        power:"Power"
+    };
+
+    Object.keys(hardware).forEach(part=>{
+
+        const el=
+            document.getElementById(
+                "hw-"+part
+            );
+
+        if(!el)return;
+
+        if(hardware[part]){
+
+            const messages={
+                motherboard:"Installed and responding.",
+                ram:"Installed and responding.",
+                storage:"Drive detected.",
+                gpu:"Display hardware detected.",
+                fan:"Cooling system operational.",
+                power:"Power supply available."
+            };
+
+            el.textContent=
+                messages[part];
+
+        }else{
+
+            el.textContent=
+                labels[part]+
+                " is missing.";
+
+        }
+
+    });
+
+    const summary=
+        document.getElementById(
+            "hardwareSummary"
+        );
+
+    if(summary){
+
+        summary.innerHTML=
+            Object.entries(hardware)
+            .map(([key,value])=>
+                `<div>
+                    ${escapeHTML(key)}:
+                    ${value ? "OK" : "MISSING"}
+                </div>`
+            )
+            .join("");
+
+    }
+
+}
+
+
+/* =========================================================
+   SETTINGS
+   ========================================================= */
+
+function openSettings(){
+
+    openFakeApp("Simulator Settings");
+
+}
+
+
+/* =========================================================
+   VERSION CHOOSER
+   ========================================================= */
+
+function openVersionChooser(){
+
+    if(!currentDevice)return;
+
+    chooseDeviceVersion(currentDevice.id);
+
+}
+
+
+/* =========================================================
+   CUSTOM DEVICES
+   ========================================================= */
+
+function createCustomDevice(){
+
+    const name=
+        document.getElementById(
+            "customName"
+        ).value.trim();
+
+    const family=
+        document.getElementById(
+            "customFamily"
+        ).value;
+
+    const version=
+        document.getElementById(
+            "customVersion"
+        ).value.trim();
+
+    const color=
+        document.getElementById(
+            "customColor"
+        ).value;
+
+    const startup=
+        document.getElementById(
+            "customStartup"
+        ).value.trim();
+
+    if(!name)return;
+
+    const custom={
+        id:
+            "custom-"+Date.now(),
+
+        name,
+
+        family,
+
+        icon:"▣",
+
+        defaultVersion:
+            createCustomVersion(
+                name,
+                family,
+                version,
+                color,
+                startup
+            )
+    };
+
+    const list=
+        getCustomDevices();
+
+    list.push(custom);
+
+    localStorage.setItem(
+        "consoleSimulatorCustomDevices",
+        JSON.stringify(list)
+    );
+
+    renderCustomDevices();
+    renderDevices();
+
+}
+
+
+function createCustomVersion(
+    name,
+    family,
+    versionName,
+    color,
+    startup
+){
+
+    const id=
+        "custom-version-"+Date.now();
+
+    const base=
+        versions.find(
+            v=>v.family===family
+        );
+
+    const customVersion={
+        id,
+        family,
+        name:
+            versionName ||
+            "Custom OS",
+        year:2026,
+        style:
+            base
+            ? base.style
+            : "modern",
+        lock:
+            base
+            ? base.lock
+            : "windows",
+        menu:
+            base
+            ? base.menu
+            : "modern",
+        description:
+            startup ||
+            "Custom operating system."
+    };
+
+    customVersion.custom=true;
+    customVersion.customColor=color;
+    customVersion.customStartup=startup;
+
+    versions.push(customVersion);
+
+    return id;
+
+}
+
+
+function getCustomDevices(){
+
+    try{
+
+        return JSON.parse(
+            localStorage.getItem(
+                "consoleSimulatorCustomDevices"
+            ) || "[]"
+        );
+
+    }catch{
+
+        return [];
+
+    }
+
+}
+
+
+function renderCustomDevices(){
+
+    const box=
+        document.getElementById(
+            "customList"
+        );
+
+    if(!box)return;
+
+    const list=
+        getCustomDevices();
+
+    if(!list.length){
+
+        box.innerHTML=
+            "<p style='color:#8896a8'>No custom devices yet.</p>";
+
+        return;
+
+    }
+
+    box.innerHTML="";
+
+    list.forEach(device=>{
+
+        const row=
+            document.createElement("div");
+
+        row.className="info-box";
+
+        row.innerHTML=`
+
+            <b>${escapeHTML(device.name)}</b>
+
+            <br>
+
+            <button
+                class="action"
+                onclick="openDevice('${device.id}')"
+            >
+                Open
+            </button>
+
+            <button
+                class="action"
+                onclick="deleteCustomDevice('${device.id}')"
+            >
+                Delete
+            </button>
+
+        `;
+
+        box.appendChild(row);
+
+    });
+
+}
+
+
+function deleteCustomDevice(id){
+
+    const list=
+        getCustomDevices()
+        .filter(
+            d=>d.id!==id
+        );
+
+    localStorage.setItem(
+        "consoleSimulatorCustomDevices",
+        JSON.stringify(list)
+    );
+
+    renderCustomDevices();
+    renderDevices();
+
+}
+
+
+/* =========================================================
+   AUDIO ENGINE
+   ========================================================= */
+
+function initAudio(){
+
+    if(audioContext)return;
+
+    try{
+
+        audioContext=
+            new (
+                window.AudioContext ||
+                window.webkitAudioContext
+            )();
+
+    }catch(e){
+
+        audioContext=null;
+
+    }
+
+}
+
+
+function tone(
+    frequency,
+    duration,
+    type="sine",
+    volume=.035,
+    delay=0
+){
+
+    if(!audioContext)return;
+
+    const oscillator=
+        audioContext.createOscillator();
+
+    const gain=
+        audioContext.createGain();
+
+    oscillator.type=type;
+
+    oscillator.frequency.value=
+        frequency;
+
+    gain.gain.value=0;
+
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+
+    const start=
+        audioContext.currentTime+
+        delay;
+
+    gain.gain.setValueAtTime(
+        0,
+        start
+    );
+
+    gain.gain.linearRampToValueAtTime(
+        volume,
+        start+.02
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+        .001,
+        start+duration
+    );
+
+    oscillator.start(start);
+
+    oscillator.stop(
+        start+
+        duration+
+        .03
+    );
+
+}
+
+
+function playPowerSound(){
+
+    tone(90,.18,"square",.04);
+    tone(150,.16,"square",.025,.12);
+
+}
+
+
+function playBootTone(){
+
+    if(!audioContext)return;
+
+    if(currentVersion.family==="retro"){
+
+        tone(440,.08,"square",.04);
+        tone(660,.08,"square",.035,.1);
+
+    }else if(
+        currentVersion.family==="windows"
+    ){
+
+        tone(330,.12,"sine",.025);
+        tone(440,.16,"sine",.03,.13);
+        tone(550,.18,"sine",.025,.28);
+
+    }else if(
+        currentVersion.family==="mac"
+    ){
+
+        tone(392,.14,"sine",.025);
+        tone(523,.18,"sine",.025,.15);
+        tone(659,.23,"sine",.02,.32);
+
+    }else{
+
+        tone(220,.12,"sine",.025);
+        tone(330,.16,"sine",.025,.13);
+        tone(440,.2,"sine",.02,.3);
+
+    }
+
+}
+
+
+function playStartupSound(){
+
+    tone(523,.1,"sine",.02);
+    tone(659,.13,"sine",.018,.12);
+
+}
+
+
+function playShutdownSound(){
+
+    tone(440,.14,"sine",.025);
+    tone(330,.14,"sine",.02,.15);
+    tone(220,.22,"sine",.018,.3);
+
+}
+
+
+function playErrorSound(){
+
+    tone(180,.12,"square",.035);
+    tone(120,.2,"square",.03,.16);
+
+}
+
+
+function playMenuSound(){
+
+    tone(700,.025,"square",.012);
+
+}
+
+
+/* =========================================================
+   LOGGING
+   ========================================================= */
+
+function addLog(message){
+
+    const box=
+        document.getElementById(
+            "bootLog"
+        );
+
+    if(!box)return;
+
+    const line=
+        document.createElement("div");
+
+    line.className="log-line";
+
+    line.textContent=
+        "["+
+        new Date().toLocaleTimeString()+
+        "] "+
+        message;
+
+    box.appendChild(line);
+
+    box.scrollTop=
+        box.scrollHeight;
+
+}
+
+
+function log(message){
+
+    addLog(message);
+
+}
+
+
+/* =========================================================
+   POWER / UI STATE
+   ========================================================= */
+
+function updatePowerInfo(){
+
+    const info=
+        document.getElementById(
+            "infoPower"
+        );
+
+    if(!info)return;
+
+    if(shuttingDown){
+
+        info.textContent=
+            "SHUTTING DOWN";
+
+    }else if(booting){
+
+        info.textContent=
+            "BOOTING";
+
+    }else if(powerState){
+
+        info.textContent=
+            locked
+            ? "LOCKED"
+            : "ON";
+
+    }else{
+
+        info.textContent=
+            "OFF";
+
+    }
+
+}
+
+
+function updateTVPower(){
+
+    const tv=
+        document.getElementById("tv");
+
+    if(!tv)return;
+
+    tv.classList.toggle(
+        "powered",
+        powerState
+    );
+
+    updatePowerInfo();
+
+}
+
+
+/* =========================================================
+   TIMERS
+   ========================================================= */
+
+function clearTimers(){
+
+    if(bootTimer){
+        clearTimeout(bootTimer);
+        bootTimer=null;
+    }
+
+    if(bootInterval){
+        clearInterval(bootInterval);
+        bootInterval=null;
+    }
+
+    if(shutdownTimer){
+        clearInterval(shutdownTimer);
+        shutdownTimer=null;
+    }
+
+}
+
+
+/* =========================================================
+   MODALS
+   ========================================================= */
+
+function openModal(id){
+
+    document
+        .getElementById(id)
+        .classList.add("open");
+
+}
+
+
+function closeModal(id){
+
+    document
+        .getElementById(id)
+        .classList.remove("open");
+
+}
+
+
+/* =========================================================
+   CLOCK / DATE
+   ========================================================= */
+
+function getTime(){
+
+    return new Date().toLocaleTimeString(
+        [],
+        {
+            hour:"2-digit",
+            minute:"2-digit"
+        }
+    );
+
+}
+
+
+function getDate(){
+
+    return new Date().toLocaleDateString(
+        [],
+        {
+            weekday:"long",
+            month:"long",
+            day:"numeric"
+        }
+    );
+
+}
+
+
+/* =========================================================
+   SECURITY / TEXT
+   ========================================================= */
+
+function escapeHTML(value){
+
+    return String(value)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+
+}
+
+
+/* =========================================================
+   LIVE CLOCK
+   ========================================================= */
+
+setInterval(()=>{
+
+    const clockIds=[
+        "iosClock"
+    ];
+
+    clockIds.forEach(id=>{
+
+        const element=
+            document.getElementById(id);
+
+        if(element){
+            element.textContent=
+                getTime();
+        }
+
+    });
+
+},1000);
+
+
+/* =========================================================
+   KEYBOARD CONTROLS
+   ========================================================= */
+
+document.addEventListener("keydown",event=>{
+
+    if(event.key==="Escape"){
+
+        document
+            .querySelectorAll(".modal.open")
+            .forEach(modal=>{
+                modal.classList.remove("open");
+            });
+
+    }
+
+    if(
+        event.key==="F2" &&
+        currentDevice
+    ){
+
+        event.preventDefault();
+
+        powerToggle();
+
+    }
+
+    if(
+        event.key==="F5" &&
+        currentDevice &&
+        powerState
+    ){
+
+        event.preventDefault();
+
+        restartDevice();
+
+    }
+
+});
+
+
+/* =========================================================
+   INITIAL AUDIO ACTIVATION
+   ========================================================= */
+
+document.addEventListener(
+    "pointerdown",
+    ()=>{
+        initAudio();
+
+        if(
+            audioContext &&
+            audioContext.state==="suspended"
+        ){
+            audioContext.resume();
+        }
+    },
+    {once:false}
+);
+
+</script>
+
+</body>
+</html>
